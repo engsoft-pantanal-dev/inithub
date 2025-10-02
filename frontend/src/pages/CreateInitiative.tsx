@@ -1,16 +1,14 @@
 import { useCallback, useState, useEffect } from "react";
 import ConversationAgent from "@/components/features/chat/ChatMessages";
-import PreviewPanel from "@/components/features/chat/ChatInitiativePreview";
+import PreviewPanel from "@/components/features/chat/ChatInitiativePreview"; 
 import type { ChatInitiative } from "@/services/agent";
 import { initiativesService } from "@/services/initiatives";
-import { useAuth } from "@/hooks/useAuth";
 import { agentService } from "@/services/agent";
 import Modal from "@/ui/modal";
-  
-const CreateInitiative = () => {
-    const { user } = useAuth();
-    const [initiative, setInitiative] = useState<ChatInitiative | null>(null);
+import { useAuth } from "@/hooks/useAuth"; 
 
+const CreateInitiative = () => {
+    const [initiative, setInitiative] = useState<ChatInitiative | null>(null);
     const [modalOpen, setModalOpen] = useState(false);
     const [modalMessage, setModalMessage] = useState<string | undefined>(undefined);
     const [modalTitle, setModalTitle] = useState<string | undefined>(undefined);
@@ -18,16 +16,7 @@ const CreateInitiative = () => {
         undefined
     );
 
-    useEffect(() => {
-        if (user?.id) {
-            agentService.setUser(user.id);
-            try {
-                agentService.reconnect();
-            } catch (error) {
-                console.error('Failed to connect to agent:', error);
-            }
-        }
-    }, [user?.id]);
+    const { user } = useAuth(); // <-- PONTO CHAVE 2: Pegar o usuário do contexto global
 
     const openModal = (title?: string, message?: string, onConfirm?: () => void) => {
         setModalTitle(title);
@@ -40,6 +29,12 @@ const CreateInitiative = () => {
         const i = initiative;
         if (!i) {
             openModal("Atenção", "Nenhuma ideia para publicar.");
+            return;
+        }
+
+        // --- PONTO CHAVE 3: Verificar se o usuário existe antes de continuar ---
+        if (!user) {
+            openModal("Erro de Autenticação", "Sua sessão expirou ou é inválida. Por favor, faça login novamente.");
             return;
         }
 
@@ -61,23 +56,27 @@ const CreateInitiative = () => {
         }
 
         try {
-            await initiativesService.createInitiative({
-                title: String(i.title),
-                description: String(i.context) || "",
-                theme: String(i.theme),
-                context: String(i.context),
-                deliverable: String(i.deliverable),
-                evaluationCriteria: String(i.evaluationCriteria),
-            });
+            // --- PONTO CHAVE 4: Chamar o serviço com a assinatura correta ---
+            await initiativesService.createInitiative(
+                {
+                    title: String(i.title),
+                    description: String(i.context) || "",
+                    theme: String(i.theme),
+                    context: String(i.context),
+                    deliverable: String(i.deliverable),
+                    evaluationCriteria: String(i.evaluationCriteria),
+                },
+                user.id // Passa o ID do usuário logado do nosso hook
+            );
+
             openModal("Sucesso", "Ideia publicada com sucesso!", () => {
-                // Reload to reset agent session and clear all fields/state
                 window.location.reload();
             });
         } catch (e: any) {
             const msg = e?.message || "Falha ao publicar a ideia.";
             openModal("Erro", msg);
         }
-    }, [initiative]);
+    }, [initiative, user]); // <-- PONTO CHAVE 5: Adicionar 'user' às dependências
 
     return (
         <div className="min-h-screen max-w-6xl mx-auto px-4 py-8 h-full">
@@ -87,6 +86,7 @@ const CreateInitiative = () => {
                 </div>
             
                 <div className="bg-slate-50 lg:col-span-2">
+                    {/* O onPublish agora passa a função handlePublish corrigida */}
                     <PreviewPanel initiative={initiative} onChange={setInitiative} onPublish={handlePublish} />
                 </div>
             </div>
@@ -99,8 +99,8 @@ const CreateInitiative = () => {
                 onClose={() => setModalOpen(false)}
                 onConfirm={onConfirmAction}
             />
-        </div>   
+        </div>  
     );
 };
-  
+
 export default CreateInitiative;

@@ -1,5 +1,4 @@
 import api from "@/services/api";
-import { authService } from "@/services/auth";
 import type { Initiative } from "@/types/initiative";
 
 type GetInitiativesParams = {
@@ -34,22 +33,22 @@ class InitiativesService {
     }
   }
 
-  async getUserInitiatives(userId: string): Promise<Initiative[]> {
+  async getUserInitiatives(): Promise<Initiative[]> {
     try {
-      const response = await api.get<Initiative[]>(`/initiatives/user/${userId}/authored`);
+      const response = await api.get<Initiative[]>(`/initiatives/me/authored`);
       return response.data;
     } catch (error) {
-      console.error(`Erro ao buscar iniciativas do usuário ${userId}:`, error);
+      console.error(`Erro ao buscar as iniciativas do usuário:`, error);
       throw error;
     }
   }
 
-  async getUserManagedInitiatives(userId: string): Promise<Initiative[]> {
+  async getUserManagedInitiatives(): Promise<Initiative[]> {
     try {
-      const response = await api.get<Initiative[]>(`/initiatives/user/${userId}/assigned`);
+      const response = await api.get<Initiative[]>(`/initiatives/me/assigned`);
       return response.data;
     } catch (error) {
-      console.error(`Erro ao buscar iniciativas gerenciadas pelo usuário ${userId}:`, error);
+      console.error(`Erro ao buscar as iniciativas gerenciadas pelo usuário:`, error);
       throw error;
     }
   }
@@ -141,25 +140,14 @@ class InitiativesService {
     }
   }
 
-  async approveInitiative(initiativeId: string, assignedToId: string) {
-    const localAdmin = authService.getUserFromLocalStorage();
-    if (!localAdmin?.id) {
-      throw new Error('Sessão inválida. Faça login novamente.');
-    }
+  async approveInitiative(initiativeId: string, assignedToId: string, assignedById: string) {
+    if (!assignedById) throw new Error('ID do aprovador não fornecido.');
 
-    let assignedById = localAdmin.id;
-    try {
-      const authUser = await authService.getUserForAuth(localAdmin.id);
-      if (authUser?.id) assignedById = authUser.id;
-    } catch (e) {
-      try {
-        const loginResp = await authService.login(localAdmin.email);
-        if (loginResp?.user?.id) assignedById = loginResp.user.id;
-      } catch {
-        // keep fallback to localAdmin.id
-      }
-    }
-    return this.changeInitiativeStatus(initiativeId, 'execution', { assignedToId, assignedById });
+    return this.changeInitiativeStatus(
+      initiativeId,
+      'execution',
+      { assignedToId, assignedById }
+    );
   }
 
   async rejectInitiative(initiativeId: string) {
@@ -188,31 +176,24 @@ class InitiativesService {
     }
   }
 
-  async createInitiative(payload: {
-    title: string;
-    description: string;
-    theme: string;
-    context: string;
-    deliverable: string;
-    evaluationCriteria: string;
-    authorId?: string;
-  }) {
-    const localUser = authService.getUserFromLocalStorage();
-    if (!localUser?.id && !payload.authorId) {
+  async createInitiative(
+    payload: {
+      title: string;
+      description: string;
+      theme: string;
+      context: string;
+      deliverable: string;
+      evaluationCriteria: string;
+    }, 
+    authorId: string
+  ) {
+    if (!authorId) {
       throw new Error('Sessão inválida. Faça login para publicar a ideia.');
     }
-
     const body = {
-      title: payload.title,
-      description: payload.description,
-      theme: payload.theme,
-      context: payload.context,
-      deliverable: payload.deliverable,
-      evaluationCriteria: payload.evaluationCriteria,
-      authorId: payload.authorId ?? localUser!.id,
+      ...payload, 
+      authorId: authorId, 
     };
-
-    // Simple client-side validation mirroring backend DTO requirements
     const missing = Object.entries(body)
       .filter(([, v]) => typeof v === 'string' && !String(v).trim())
       .map(([k]) => k);
@@ -222,7 +203,7 @@ class InitiativesService {
 
     try {
       const response = await api.post('/initiatives', body);
-      return response.data as Initiative;
+      return response.data as Initiative; 
     } catch (error) {
       console.error('Erro ao criar iniciativa:', error);
       throw error;

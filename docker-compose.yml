@@ -18,7 +18,7 @@ services:
             node dist/src/main.js"
     networks:
       - init-hub-network
-
+    
   agent:
     build:
       context: ./agent

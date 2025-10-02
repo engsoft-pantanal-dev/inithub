@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateInitiativeDto {
@@ -11,11 +11,6 @@ export class CreateInitiativeDto {
   @IsString()
   @IsNotEmpty()
   description: string;
-
-  @ApiProperty({ description: 'Original initiative creator' })
-  @IsString()
-  @IsNotEmpty()
-  authorId: string;
 
   @ApiProperty()
   @IsString()
