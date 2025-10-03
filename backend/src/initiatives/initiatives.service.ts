@@ -155,7 +155,8 @@ export class InitiativesService {
       // Prisma expects the generated enum type; using string is fine as long as it matches
       payload.status = status as any;
     }
-    return this.prisma.initiative.update({
+    
+    const updated = await this.prisma.initiative.update({
       where: { id },
       data: payload,
       include: {
@@ -211,6 +212,18 @@ export class InitiativesService {
         },
       },
     });
+
+    const contentFields = ['title', 'description', 'theme', 'context', 'deliverable', 'evaluationCriteria'];
+    const hasContentUpdate = contentFields.some(field => payload[field] !== undefined);
+    
+    if (hasContentUpdate) {
+      this.embeddings.generateAndStoreInitiativeEmbedding(updated).catch((error) => {
+        console.error('Failed to update embeddings for initiative:', id, error);
+        // Swallow errors to avoid blocking the request path
+      });
+    }
+
+    return updated;
   }
 
   async remove(id: string, userId?: string) {
