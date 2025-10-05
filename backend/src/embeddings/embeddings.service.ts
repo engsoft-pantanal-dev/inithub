@@ -102,16 +102,17 @@ export class EmbeddingsService {
   async searchSimilarText(text: string, limit = 10) {
     const vector = await this.embedText(text);
     const vectorLiteral = `[${vector.join(',')}]`;
-    // Return only id and distance to keep payload lean
-    const rows = await this.prisma.$queryRawUnsafe<Array<{ id: string; distance: number }>>(
+    
+    const rows: Array<{ id: string; distance: number }> = await this.prisma.$queryRawUnsafe(
       `SELECT id, (embedding <-> $1::vector) AS distance
-       FROM "initiatives"
-       WHERE embedding IS NOT NULL
-       ORDER BY embedding <-> $1::vector ASC
-       LIMIT $2`,
+      FROM "initiatives"
+      WHERE embedding IS NOT NULL
+      ORDER BY embedding <-> $1::vector ASC
+      LIMIT $2`,
       vectorLiteral,
       limit,
     );
+
     return rows;
   }
 
@@ -124,9 +125,8 @@ export class EmbeddingsService {
       include: { _count: { select: { likes: true, comments: true } } },
     });
     const map = new Map(initiatives.map((i) => [i.id, i]));
-    // Preserve similarity order, attach distance
     return idsWithScores
       .map(({ id, distance }) => ({ distance, initiative: map.get(id) }))
       .filter((x) => x.initiative);
-  }
+  }
 }

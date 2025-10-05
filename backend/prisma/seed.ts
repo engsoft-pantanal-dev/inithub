@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -7,13 +8,15 @@ async function main() {
   await prisma.comment.deleteMany();          // depois os comentários
   await prisma.initiativeUpdate.deleteMany(); // depois os updates
   await prisma.initiative.deleteMany();       // agora as iniciativas
-  await prisma.user.deleteMany();   
-
+  await prisma.user.deleteMany();
+  const salt = await bcrypt.genSalt();   
+  const hashedPassword = await bcrypt.hash('umaSenhaPadrao123', salt);
   const users = [
     {
       id: "bwknr-zxtvq-mgsjd",
       email: "sofia.rodrigues@inithub.com",
       name: "Sofia Rodrigues",
+      password: hashedPassword,
       department: "Sustentabilidade",
       emojiAvatar: "👩‍🌾",
       isAdmin: false,
@@ -24,6 +27,7 @@ async function main() {
       id: "fhlqp-xrzkv-nwtmg",
       email: "lucas.ferreira@inithub.com",
       name: "Lucas Ferreira",
+      password: hashedPassword,
       department: "Governança",
       emojiAvatar: "👤",
       isAdmin: false,
@@ -34,6 +38,7 @@ async function main() {
       id: "kjvzn-qtbdx-prwhs",
       email: "isabela.alves@inithub.com",
       name: "Isabela Alves",
+      password: hashedPassword,
       department: "Tecnologia",
       emojiAvatar: "👩‍🔬",
       isAdmin: false,
@@ -44,6 +49,7 @@ async function main() {
       id: "mklqz-pxvtr-hjnwg",
       email: "gabriel.souza@inithub.com",
       name: "Gabriel Souza",
+      password: hashedPassword,
       department: "Marketing",
       emojiAvatar: "👨‍💼",
       isAdmin: false,
@@ -54,6 +60,7 @@ async function main() {
       id: "ndpkr-vxwql-jsmgt",
       email: "joao.santos@inithub.com",
       name: "João Santos",
+      password: hashedPassword,
       department: "Tecnologia",
       emojiAvatar: "👨‍💻",
       isAdmin: false,
@@ -64,6 +71,7 @@ async function main() {
       id: "pqvzm-dhktj-xlgfn",
       email: "pedro.costa@inithub.com",
       name: "Pedro Costa",
+      password: hashedPassword,
       department: "RH",
       emojiAvatar: "👨‍💼",
       isAdmin: false,
@@ -74,6 +82,7 @@ async function main() {
       id: "qnzpk-rxvtm-hgjlw",
       email: "thiago.barbosa@inithub.com",
       name: "Thiago Barbosa",
+      password: hashedPassword,
       department: "Governança",
       emojiAvatar: "👤",
       isAdmin: false,
@@ -84,6 +93,7 @@ async function main() {
       id: "tgxzp-vlmnq-bwkjr",
       email: "camila.nunes@inithub.com",
       name: "Camila Nunes",
+      password: hashedPassword,
       department: "Cultura",
       emojiAvatar: "👩‍🎨",
       isAdmin: false,
@@ -94,6 +104,7 @@ async function main() {
       id: "vzxqr-bgtnh-mwkjp",
       email: "juliana.martins@inithub.com",
       name: "Juliana Martins",
+      password: hashedPassword,
       department: "Tecnologia",
       emojiAvatar: "👩‍💻",
       isAdmin: false,
@@ -104,6 +115,7 @@ async function main() {
       id: "wrqmz-hflpv-xkntg",
       email: "rafael.lima@inithub.com",
       name: "Rafael Lima",
+      password: hashedPassword,
       department: "Cultura",
       emojiAvatar: "👨‍🔧",
       isAdmin: false,
@@ -114,6 +126,7 @@ async function main() {
       id: "xqfhm-pgktv-bzrws",
       email: "admin@inithub.com",
       name: "Ana Silva",
+      password: hashedPassword,
       department: "Governança",
       emojiAvatar: "👩‍💼",
       isAdmin: true,
@@ -124,6 +137,7 @@ async function main() {
       id: "ztblx-mvnhd-qwrjk",
       email: "maria.oliveira@inithub.com",
       name: "Maria Oliveira",
+      password: hashedPassword,
       department: "Marketing",
       emojiAvatar: "👩‍🎨",
       isAdmin: false,

@@ -56,6 +56,7 @@ describe('UsersController', () => {
         email: 'test@example.com',
         name: 'Test User',
         department: 'IT',
+        password: 'securePassword123',
       };
 
       mockUsersService.create.mockResolvedValue(mockUser);
@@ -169,6 +170,6 @@ describe('UsersController', () => {
 
       await expect(controller.remove('999')).rejects.toThrow(NotFoundException);
       expect(mockUsersService.remove).toHaveBeenCalledWith('999');
-    });
-  });
+    });
+  });
 });

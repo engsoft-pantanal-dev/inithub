@@ -1,64 +1,77 @@
-
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
-import { LoginDto, UserAuthDto, LoginResponseDto } from './dto';
+import { JwtService } from '@nestjs/jwt';
+import { CreateUserDto } from '../users/dto/user-create.dto';
+import { LoginDto } from './dto';
+import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class AuthService {
-  constructor(private usersService: UsersService) {}
+  constructor(
+    private usersService: UsersService,
+    private jwtService: JwtService,
+  ) {}
 
-  async getUserForAuth(userId: string): Promise<UserAuthDto> {
-    const user = await this.usersService.findOne(userId);
-    
-    const result = {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      isAdmin: user.isAdmin,
-      emojiAvatar: user.emojiAvatar,
-      department: user.department,
-    };
+  /**
+   * @param createUserDto 
+   */
+  async register(createUserDto: CreateUserDto) {
+    const salt = await bcrypt.genSalt();
+    const hashedPassword = await bcrypt.hash(createUserDto.password, salt);
 
+    const user = await this.usersService.create({
+      ...createUserDto,
+      password: hashedPassword,
+    });
+
+    const { password, ...result } = user;
     return result;
   }
 
-  async login(loginDto: LoginDto): Promise<LoginResponseDto> {
-    // MVP: accept any password, only require email exists in DB
-    const { email } = loginDto;
+  /**
+   * @param loginDto 
+   */
+  async login(loginDto: LoginDto): Promise<{ access_token: string }> {
+    const user = await this.usersService.findByEmail(loginDto.email);
 
-    // Nao criei um findByEmail
-    const users = await this.usersService.findAll();
-    const user = users.find(u => u.email === email);
-    
     if (!user) {
-      // For MVP we can create the user on-the-fly with a placeholder name if not found
-      const created = await this.usersService.create({ 
-        email, 
-        name: email.split('@')[0] 
-      });
-      return {
-        user: {
-          id: created.id,
-          email: created.email,
-          name: created.name,
-          isAdmin: created.isAdmin,
-          emojiAvatar: created.emojiAvatar,
-          department: created.department,
-        },
-        isAuthenticated: true,
-      };
+      throw new UnauthorizedException('Credenciais inválidas.');
     }
 
+    const isPasswordMatching = await bcrypt.compare(
+      loginDto.password,
+      user.password,
+    );
+
+    if (!isPasswordMatching) {
+      throw new UnauthorizedException('Credenciais inválidas.');
+    }
+
+ 
+    const payload = { email: user.email, sub: user.id }; 
+
     return {
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        isAdmin: user.isAdmin,
-        emojiAvatar: user.emojiAvatar,
-        department: user.department,
-      },
-      isAuthenticated: true,
+      access_token: this.jwtService.sign(payload),
     };
   }
+
+
+
+  /**
+   * Busca os dados de um usuário pelo seu ID.
+   * Usado para retornar o perfil do usuário logado.
+   * @param userId - O ID do usuário (extraído do token JWT).
+   */
+  async getProfile(userId: string) {
+    // Usamos o serviço de usuários para encontrar o usuário pelo ID
+    const user = await this.usersService.findOne(userId); 
+
+    if (!user) {
+      throw new UnauthorizedException('Usuário não encontrado.');
+    }
+
+    const { password, ...result } = user;
+    return result;
+  }
+
 }
