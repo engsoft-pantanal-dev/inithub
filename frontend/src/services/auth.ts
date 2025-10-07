@@ -1,69 +1,32 @@
-import api from "./api";
+import api from './api';
+import type { User } from '../types/user';
 
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-  isAdmin: boolean;
-  emojiAvatar?: string;
-  department?: string;
-}
+export type CreateUserDto = Omit<User, 'id'> & {
+  password: string;
+};
 
-export interface LoginResponse {
-  user: User;
-  isAuthenticated: boolean;
-}
-
-export interface UserAuthData {
-  id: string;
-  email: string;
-  name: string;
-  isAdmin: boolean;
-  emojiAvatar?: string;
-  department?: string;
+interface BackendLoginResponse {
+  access_token: string;
 }
 
 class AuthService {
-  async getUserForAuth(userId: string): Promise<UserAuthData> {
-    try {
-      const response = await api.get(`/auth/user?userId=${userId}`);
-      return response.data;
-    } catch (error) {
-      console.error('Erro ao buscar dados do usuário:', error);
-      throw error;
-    }
+  /**
+   * @returns
+   */
+  async login(email: string, password: string): Promise<BackendLoginResponse> {
+    const response = await api.post<BackendLoginResponse>('/auth/login', {
+      email,
+      password,
+    });
+    return response.data;
   }
 
-  async login(email: string, password?: string): Promise<LoginResponse> {
-    try {
-      const response = await api.post('/auth/login', {
-        email,
-        password: password || 'any-password' // Para MVP, qualquer senha é aceita
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Erro ao fazer login:', error);
-      throw error;
-    }
-  }
-
-  saveUserToLocalStorage(user: User): void {
-    localStorage.setItem('user', JSON.stringify(user));
-    localStorage.setItem('isAuthenticated', 'true');
-  }
-
-  getUserFromLocalStorage(): User | null {
-    const userData = localStorage.getItem('user');
-    return userData ? JSON.parse(userData) : null;
-  }
-
-  isAuthenticated(): boolean {
-    return localStorage.getItem('isAuthenticated') === 'true';
-  }
-
-  logout(): void {
-    localStorage.removeItem('user');
-    localStorage.removeItem('isAuthenticated');
+  /**
+   * @returns 
+   */
+  async register(userData: CreateUserDto): Promise<User> {
+    const response = await api.post<User>('/auth/register', userData);
+    return response.data;
   }
 }
 

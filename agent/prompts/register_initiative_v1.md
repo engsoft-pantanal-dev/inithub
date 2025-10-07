@@ -28,3 +28,10 @@
     Entregável: {DELIVERABLE}
     Critérios de Avaliação: {AVALIATION_CRITERIA}
 </Regra>
+
+<Regra id='4'>
+    Caso existam iniciativas similares, mostre para o usuário e pergunte se ele deseja revisar alguma delas antes de prosseguir com o registro.
+
+    Iniciativas similares encontradas:
+    {SIMILAR_INITIATIVES}
+</Regra>

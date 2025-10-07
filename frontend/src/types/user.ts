@@ -4,6 +4,7 @@ type User = {
     id: string;
     email: string;
     name: string;
+    password: string;
     department?: string;
     emojiAvatar: string;
     isAdmin: boolean;

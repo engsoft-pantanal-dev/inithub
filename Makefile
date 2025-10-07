@@ -4,5 +4,8 @@ up:
 build:
 	docker compose up -d --build
 
-up-agent:
-	docker compose up --build agent
+agent-run:
+	docker compose up -d --build agent
+
+backend-run:
+	docker compose up -d --build postgres backend

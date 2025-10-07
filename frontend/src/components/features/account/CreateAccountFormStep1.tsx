@@ -2,16 +2,24 @@ import { useNavigate } from "react-router-dom";
 import { Input } from "@/ui/input";
 import { Label } from "@/ui/label";
 import { Button } from "@/ui/button";
+import type { CreateUserDto } from "@/services/auth"; 
 
 interface CreateAccountFormStep1Props {
   onNext: () => void;
+  formData: Partial<CreateUserDto>;
+  handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-const CreateAccountFormStep1 = ({ onNext }: CreateAccountFormStep1Props) => {
+const CreateAccountFormStep1 = ({ onNext, formData, handleChange }: CreateAccountFormStep1Props) => {
     const navigate = useNavigate();
 
     const goToLogin = () => {
-        navigate("/");
+        navigate("/login");
+    }
+
+    const handleNext = (e: React.MouseEvent) => {
+      e.preventDefault();
+      onNext();
     }
 
     return (
@@ -25,24 +33,28 @@ const CreateAccountFormStep1 = ({ onNext }: CreateAccountFormStep1Props) => {
                 </div>
 
                 <div className="grid gap-2">
-                    <Label htmlFor="fullName">Nome Completo</Label>
+                    <Label htmlFor="name">Nome Completo</Label>
                     <Input
                         className="bg-transparent"
-                        id="fullName" 
+                        id="name" 
                         type="text" 
                         placeholder="Digite seu nome completo" 
                         required 
+                        value={formData.name || ''}
+                        onChange={handleChange}
                     />
                 </div>
 
                 <div className="grid gap-2">
-                    <Label htmlFor="role">Cargo</Label>
+                    <Label htmlFor="department">Departamento</Label>
                     <Input 
                         className="bg-transparent"
-                        id="role" 
+                        id="department" 
                         type="text" 
-                        placeholder="Digite seu cargo" 
+                        placeholder="Digite seu departamento" 
                         required 
+                        value={formData.department || ''}
+                        onChange={handleChange}
                     />
                 </div>
 
@@ -53,12 +65,11 @@ const CreateAccountFormStep1 = ({ onNext }: CreateAccountFormStep1Props) => {
                         id="photo" 
                         type="file" 
                         accept="image/*"
-                        required 
                     />
                 </div>
 
                 <div className="grid gap-3">
-                    <Button type="button" className="w-full shadow-md" onClick={onNext}>
+                    <Button type="button" className="w-full shadow-md" onClick={handleNext}>
                         Próximo
                     </Button>
                     <Button 

@@ -6,12 +6,13 @@ from langgraph.graph import StateGraph, START, END
 
 workflow = StateGraph(State)
 
-workflow.add_node("classify_user_request", nodes.classify_user_request)
+workflow.add_node("classify_user_request", nodes.classify_user_request_v1)
+workflow.add_node("guide", nodes.guide_v1)
+workflow.add_node("find_initiative", nodes.find_initiative_v1)
+workflow.add_node("register_initiative", nodes.register_initiative_v1)
+workflow.add_node("extract_initiative", nodes.extract_initiative_v1)
+
 workflow.add_node("route_user_request", nodes.route_user_request)
-workflow.add_node("guide", nodes.guide)
-workflow.add_node("find_initiative", nodes.find_initiative)
-workflow.add_node("register_initiative", nodes.register_initiative)
-workflow.add_node("extract_initiative", nodes.extract_initiative)
 
 workflow.add_edge(START, "classify_user_request")
 workflow.add_edge("classify_user_request", "extract_initiative")

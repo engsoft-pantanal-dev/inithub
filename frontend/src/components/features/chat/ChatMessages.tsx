@@ -30,26 +30,47 @@ const ChatMessages = ({ onInitiativeUpdate }: Props) => {
     };
 
     useEffect(() => {
-        agentService.connect();
-        const unsub = agentService.subscribe(({ message, initiative }) => {
-            if (typingTimeoutRef.current) {
-                clearTimeout(typingTimeoutRef.current);
-                typingTimeoutRef.current = null;
+        let retryTimeout: number | null = null;
+        let unsubscribe: (() => void) | null = null;
+
+        const attemptConnection = () => {
+            try {
+                agentService.connect();
+                
+                unsubscribe = agentService.subscribe(({ message, initiative }) => {
+                    if (typingTimeoutRef.current) {
+                        clearTimeout(typingTimeoutRef.current);
+                        typingTimeoutRef.current = null;
+                    }
+                    
+                    setIsAgentTyping(false);
+                    setMessages((prev) => [
+                        ...prev,
+                        {
+                            id: String(Date.now()),
+                            author: "ia",
+                            text: message,
+                        },
+                    ]);
+                    onInitiativeUpdate?.(initiative);
+                });
+                
+                console.log('✅ Connected to agent service');
+            } catch (error) {
+                console.log('⏳ Waiting for user authentication, retrying in 2s...');
+                retryTimeout = window.setTimeout(attemptConnection, 2000);
             }
-            
-            setIsAgentTyping(false);
-            setMessages((prev) => [
-                ...prev,
-                {
-                    id: String(Date.now()),
-                    author: "ia",
-                    text: message,
-                },
-            ]);
-            onInitiativeUpdate?.(initiative);
-        });
+        };
+
+        attemptConnection();
+
         return () => {
-            unsub();
+            if (unsubscribe) {
+                unsubscribe();
+            }
+            if (retryTimeout) {
+                clearTimeout(retryTimeout);
+            }
             if (typingTimeoutRef.current) {
                 clearTimeout(typingTimeoutRef.current);
             }

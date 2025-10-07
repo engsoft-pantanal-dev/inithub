@@ -7,7 +7,7 @@ py-modules = []
 
 [project]
 name = "init-agent"
-version = "0.0.1"
+version = "1.0.0"
 requires-python = ">=3.12"
 readme = "README.md"
 
@@ -46,6 +46,10 @@ dependencies = [
 
     # Graph visualization
     "pygraphviz==1.14",
+
+    # Google Sheets integration
+    "gspread==6.2.1",
+    "google-auth==2.40.3",
 ]
 
 [project.optional-dependencies]
