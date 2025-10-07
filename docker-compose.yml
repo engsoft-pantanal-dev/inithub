@@ -1,62 +1,6 @@
 version: "3.9"
 
 services:
-  backend:
-    build:
-      context: ./backend
-      dockerfile: ./docker/backend.dockerfile
-    container_name: init-hub-backend
-    restart: always
-    ports:
-      - "3000:3000"
-    env_file: "./.env"
-    depends_on:
-      postgres:
-        condition: service_healthy
-    command: >
-      sh -c "npx prisma migrate deploy &&
-            node dist/prisma/seed.js &&
-            node dist/src/main.js"
-    networks:
-      - init-hub-network
-
-  agent:
-    build:
-      context: ./agent
-      dockerfile: ./docker/agent.dockerfile
-    container_name: init-hub-agent
-    restart: always
-    ports:
-      - "8000:8000"
-    env_file: "./.env"
-    volumes:
-      - ./agent:/app
-    networks:
-      - init-hub-network
-
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: ./docker/frontend.dockerfile
-    container_name: init-hub-frontend
-    restart: always
-    # Expose frontend port to the internal network only. Nginx will proxy external traffic on :80 -> frontend:5173
-    ports:
-      - "5173:5173"
-    expose:
-      - "5173"
-    env_file: "./.env"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    environment:
-      - CHOKIDAR_USEPOLLING=true
-    networks:
-      - init-hub-network
-    depends_on:
-      - backend
-      - agent
-
   postgres:
     image: pgvector/pgvector:pg15
     container_name: inithub-postgres
@@ -65,7 +9,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres -d inithub" ]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d inithub"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -76,22 +20,72 @@ services:
     networks:
       - init-hub-network
 
-  nginx:
-    image: nginx:stable
-    container_name: init-hub-nginx
+  backend:
+    build:
+      context: ./backend
+      dockerfile: ./docker/backend.dockerfile
+    container_name: init-hub-backend
     restart: always
+    env_file: "./.env"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: >
+      sh -c "npx prisma migrate deploy &&
+             node dist/prisma/seed.js &&
+             node dist/src/main.js"
+    ports:
+      - "3000:3000"
+    networks:
+      - init-hub-network
+
+  agent:
+    build:
+      context: ./agent
+      dockerfile: ./docker/agent.dockerfile
+    container_name: init-hub-agent
+    restart: always
+    env_file: "./.env"
+    volumes:
+      - ./agent:/app
+    ports:
+      - "8000:8000"
+    networks:
+      - init-hub-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ./docker/frontend.dockerfile
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt:ro
     ports:
       - "80:80"
       - "443:443"
-    volumes:
-      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
-      - /etc/letsencrypt:/etc/letsencrypt:ro
+    container_name: init-hub-frontend
+    restart: always
+    env_file: "./.env"
     networks:
       - init-hub-network
     depends_on:
-      - frontend
       - backend
       - agent
+
+  # nginx:
+  #   image: nginx:1.24
+  #   container_name: inithub-nginx
+  #   volumes:
+  #     - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+  #     - /etc/letsencrypt:/etc/letsencrypt:ro
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   depends_on:
+  #     - frontend
+  #     - backend
+  #     - agent
+  #   networks:
+  #     - init-hub-network
 
 networks:
   init-hub-network:
@@ -99,3 +93,4 @@ networks:
 
 volumes:
   pg_data:
+  nginx-frontend:

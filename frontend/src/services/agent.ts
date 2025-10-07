@@ -32,9 +32,14 @@ class AgentService {
   private listeners = new Set<(data: { message: string; initiative: ChatInitiative | null }) => void>();
 
   private getUrl(): string {
-    // Vite env var fallback to known default
-    const url = (import.meta as any).env?.VITE_AGENT_WS_URL || 'ws://localhost:8000/ws/v1/agent';
-    return url as string;
+  // Prefer explicit env var if provided (can include ws:// or wss://). Otherwise derive from current page protocol.
+  const envUrl = (import.meta as any).env?.VITE_AGENT_WS_URL;
+  if (envUrl) return envUrl as string;
+
+  const pageProtocol = typeof window !== 'undefined' ? window.location.protocol : 'http:';
+  const scheme = pageProtocol === 'https:' ? 'wss' : 'ws';
+  const host = typeof window !== 'undefined' ? window.location.host : 'inithub.site';
+  return `${scheme}://${host}/agent/ws/v1/agent`;
   }
 
   connect(): WebSocket {

@@ -1,19 +1,19 @@
-# Dockerfile para aplicação frontend
-FROM node:20
+# Etapa de build
+FROM node:20 as builder
 
 WORKDIR /app
 
-# Copie apenas package.json e package-lock.json
 COPY package*.json ./
-
-# Instale dependências
 RUN npm install
-
-# Copie todo o projeto
 COPY . .
+RUN npm run build
 
-# Exponha a porta usada pelo React (npm run dev)
-EXPOSE 5173
+# Etapa de produção
+FROM nginx:1.24.0
 
-# Comando para iniciar a aplicação React e Vite
-CMD ["npm", "run", "preview", "--", "--host", "0.0.0.0", "--port", "5173"]
+COPY ./nginx/default.conf /etc/nginx/conf.d/default.conf
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]

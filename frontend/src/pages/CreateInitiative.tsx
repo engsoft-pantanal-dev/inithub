@@ -3,14 +3,29 @@ import ConversationAgent from "@/components/features/chat/ChatMessages";
 import PreviewPanel from "@/components/features/chat/ChatInitiativePreview";
 import type { ChatInitiative } from "@/services/agent";
 import { initiativesService } from "@/services/initiatives";
+import Modal from "@/ui/modal";
   
 const CreateInitiative = () => {
     const [initiative, setInitiative] = useState<ChatInitiative | null>(null);
 
+    const [modalOpen, setModalOpen] = useState(false);
+    const [modalMessage, setModalMessage] = useState<string | undefined>(undefined);
+    const [modalTitle, setModalTitle] = useState<string | undefined>(undefined);
+    const [onConfirmAction, setOnConfirmAction] = useState<(() => void) | undefined>(
+        undefined
+    );
+
+    const openModal = (title?: string, message?: string, onConfirm?: () => void) => {
+        setModalTitle(title);
+        setModalMessage(message);
+        setOnConfirmAction(() => onConfirm);
+        setModalOpen(true);
+    };
+
     const handlePublish = useCallback(async () => {
         const i = initiative;
         if (!i) {
-            window.alert("Nenhuma ideia para publicar.");
+            openModal("Atenção", "Nenhuma ideia para publicar.");
             return;
         }
 
@@ -27,7 +42,7 @@ const CreateInitiative = () => {
             .map(([, label]) => label);
 
         if (missing.length > 0) {
-            window.alert(`Preencha os campos: ${missing.join(", ")}`);
+            openModal("Campos faltando", `Preencha os campos: ${missing.join(", ")}`);
             return;
         }
 
@@ -40,12 +55,13 @@ const CreateInitiative = () => {
                 deliverable: String(i.deliverable),
                 evaluationCriteria: String(i.evaluationCriteria),
             });
-            window.alert("Ideia publicada com sucesso!");
-            // Reload to reset agent session and clear all fields/state
-            window.location.reload();
+            openModal("Sucesso", "Ideia publicada com sucesso!", () => {
+                // Reload to reset agent session and clear all fields/state
+                window.location.reload();
+            });
         } catch (e: any) {
             const msg = e?.message || "Falha ao publicar a ideia.";
-            window.alert(msg);
+            openModal("Erro", msg);
         }
     }, [initiative]);
 
@@ -60,6 +76,15 @@ const CreateInitiative = () => {
                     <PreviewPanel initiative={initiative} onChange={setInitiative} onPublish={handlePublish} />
                 </div>
             </div>
+            <Modal
+                open={modalOpen}
+                title={modalTitle}
+                message={modalMessage}
+                confirmText={onConfirmAction ? "Confirmar" : "OK"}
+                cancelText={onConfirmAction ? "Cancelar" : "Fechar"}
+                onClose={() => setModalOpen(false)}
+                onConfirm={onConfirmAction}
+            />
         </div>   
     );
 };
