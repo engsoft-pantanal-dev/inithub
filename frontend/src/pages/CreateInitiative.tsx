@@ -1,9 +1,8 @@
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useState } from "react";
 import ConversationAgent from "@/components/features/chat/ChatMessages";
 import PreviewPanel from "@/components/features/chat/ChatInitiativePreview"; 
 import type { ChatInitiative } from "@/services/agent";
 import { initiativesService } from "@/services/initiatives";
-import { agentService } from "@/services/agent";
 import Modal from "@/ui/modal";
 import { useAuth } from "@/hooks/useAuth"; 
 
@@ -17,20 +16,6 @@ const CreateInitiative = () => {
     );
 
     const { user } = useAuth(); // <-- PONTO CHAVE 2: Pegar o usuário do contexto global
-
-    const openModal = (title?: string, message?: string, onConfirm?: () => void) => {
-        setModalTitle(title);
-        setModalMessage(message);
-        setOnConfirmAction(() => onConfirm);
-        setModalOpen(true);
-    };
-
-    const [modalOpen, setModalOpen] = useState(false);
-    const [modalMessage, setModalMessage] = useState<string | undefined>(undefined);
-    const [modalTitle, setModalTitle] = useState<string | undefined>(undefined);
-    const [onConfirmAction, setOnConfirmAction] = useState<(() => void) | undefined>(
-        undefined
-    );
 
     const openModal = (title?: string, message?: string, onConfirm?: () => void) => {
         setModalTitle(title);
