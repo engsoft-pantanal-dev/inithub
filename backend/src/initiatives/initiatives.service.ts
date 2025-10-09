@@ -21,8 +21,8 @@ export class InitiativesService {
     return initiative;
   }
 
-  async update(id: string, data: UpdateInitiativeDto, userId: string) {
-    await this._checkInitiativeOwnership(id, userId);
+  async update(id: string, data: UpdateInitiativeDto, userId: string, isAdmin?: boolean) {
+    await this._checkInitiativeOwnership(id, userId, isAdmin);
 
     return this.prisma.initiative.update({
       where: { id },
@@ -30,8 +30,8 @@ export class InitiativesService {
     });
   }
 
-  async remove(id: string, userId: string) {
-    await this._checkInitiativeOwnership(id, userId); 
+  async remove(id: string, userId: string, isAdmin?: boolean) {
+    await this._checkInitiativeOwnership(id, userId, isAdmin); 
 
     return this.prisma.$transaction([
       this.prisma.like.deleteMany({ where: { initiativeId: id } }),
@@ -75,9 +75,9 @@ export class InitiativesService {
     return this.prisma.comment.delete({ where: { id: commentId } });
   }
 
-  async addUpdate(initiativeId: string, data: CreateInitiativeUpdateDto, userId: string) {
+  async addUpdate(initiativeId: string, data: CreateInitiativeUpdateDto, userId: string, isAdmin?: boolean) {
 
-    await this._checkInitiativeOwnership(initiativeId, userId);
+    await this._checkInitiativeOwnership(initiativeId, userId, isAdmin);
 
     return this.prisma.initiativeUpdate.create({
       data: {
@@ -404,7 +404,12 @@ export class InitiativesService {
 
   // --- MÉTODO PRIVADO AUXILIAR ---
 
-  private async _checkInitiativeOwnership(initiativeId: string, userId: string) {
+  private async _checkInitiativeOwnership(initiativeId: string, userId: string, isAdmin?: boolean) {
+    // Allow admin users to bypass ownership check
+    if (isAdmin) {
+      return;
+    }
+
     const initiative = await this.prisma.initiative.findUnique({
       where: { id: initiativeId },
       select: { authorId: true },

@@ -51,7 +51,8 @@ export class InitiativesController {
   @ApiOperation({ summary: 'Update initiative (requires token)' })
   update(@Param('id') id: string, @Body() updateInitiativeDto: UpdateInitiativeDto, @Request() req) {
     const userId = req.user.id;
-    return this.initiativesService.update(id, updateInitiativeDto, userId);
+    const isAdmin = req.user.isAdmin || false;
+    return this.initiativesService.update(id, updateInitiativeDto, userId, isAdmin);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -60,7 +61,8 @@ export class InitiativesController {
   @ApiOperation({ summary: 'Delete initiative (requires token)' })
   remove(@Param('id') id: string, @Request() req) {
     const userId = req.user.id;
-    return this.initiativesService.remove(id, userId);
+    const isAdmin = req.user.isAdmin || false;
+    return this.initiativesService.remove(id, userId, isAdmin);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -105,7 +107,8 @@ export class InitiativesController {
   @ApiOperation({ summary: 'Add execution update to initiative (requires token)' })
   addUpdate(@Param('id') initiativeId: string, @Body() dto: CreateInitiativeUpdateDto, @Request() req) {
     const userId = req.user.id;
-    return this.initiativesService.addUpdate(initiativeId, dto, userId);
+    const isAdmin = req.user.isAdmin || false;
+    return this.initiativesService.addUpdate(initiativeId, dto, userId, isAdmin);
   }
 
   @UseGuards(JwtAuthGuard)
