@@ -18,7 +18,9 @@ workbook = client.open_by_key(sheet_id)
 def get_test_cases_sheet():
     worksheet_list = map(lambda x: x.title, workbook.worksheets())
 
-    new_worksheet_name = f"Test cases v{importlib.metadata.version('init-agent')}"
+    new_worksheet_name = (
+        f"Test cases v{importlib.metadata.version('init-agent')} - {env.ENV}"
+    )
 
     if new_worksheet_name in worksheet_list:
         sheet = workbook.worksheet(new_worksheet_name)

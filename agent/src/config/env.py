@@ -5,7 +5,13 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
+ENV = os.getenv("ENV", "PROD")
 LOGGING_LEVEL = os.getenv("LOGGING_LEVEL", "info")
+COLORLOG_AVAILABLE = os.getenv("COLORLOG_AVAILABLE", "true").lower() in (
+    "true",
+    "1",
+    "yes",
+)
 
 BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:3000")
 
@@ -21,12 +27,6 @@ OPENAI_MODEL_NAME = os.getenv("OPENAI_MODEL_NAME", "gpt-4.1-2025-04-14")
 
 AGENT_MODEL_TEMPERATURE = float(os.getenv("AGENT_MODEL_TEMPERATURE", "0.3"))
 AGENT_EMBEDDING_THRESHOLD = float(os.getenv("AGENT_EMBEDDING_THRESHOLD", "0.75"))
-
-COLORLOG_AVAILABLE = os.getenv("COLORLOG_AVAILABLE", "true").lower() in (
-    "true",
-    "1",
-    "yes",
-)
 
 ENABLE_GOOGLE_SHEETS = os.getenv("ENABLE_GOOGLE_SHEETS", "false").lower() in (
     "true",
