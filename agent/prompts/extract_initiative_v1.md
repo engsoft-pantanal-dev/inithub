@@ -2,8 +2,6 @@
   Você é um classificador.
 
   Sua tarefa é analisar a mensagem do usuário e identificar os campos da iniciativa.
-  Retorne apenas um JSON com os campos da iniciativa.
-
 </Contexto>
 
 <Regras>
@@ -15,7 +13,7 @@
       Título: {TITLE}
       Tema: {THEME}
 
-    Se algum campo não for mencionado, deixe como None.
+    Se algum campo não foi mencionado pelo usuário, use null (não None).
   </Regra>
 
   <Regra id='2'>
@@ -42,11 +40,11 @@
 
     Structured Output:
     {{
-      "title": None,
+      "title": null,
       "context": "Processo de onboarding de novos investidores na bolsa",
-      "theme": None,
-      "deliverable": None,
-      "avaliation_criteria": None
+      "theme": null,
+      "deliverable": null,
+      "avaliation_criteria": null
     }}
   </Exemplo>
 
@@ -58,9 +56,21 @@
     {{
       "title": "Iniciativa de Onboarding de Investidores",
       "context": "Criar um portal interativo que oriente novos investidores sobre produtos, riscos e oportunidades do mercado de capitais",
-      "theme": None,
+      "theme": null,
       "deliverable": "Portal interativo que oriente novos investidores sobre produtos, riscos e oportunidades do mercado de capitais",
-      "avaliation_criteria": "Número de acessos, taxa de conclusão das trilhas e feedback dos usuários.
+      "avaliation_criteria": "Número de acessos, taxa de conclusão das trilhas e feedback dos usuários."
     }}
   </Exemplo>
 </Exemplos>
+
+<SaidaEsperada>
+  Responda APENAS com um objeto JSON válido.
+
+  {{
+    "title": string ou null,
+    "context": string ou null,
+    "theme": string ou null,
+    "deliverable": string ou null,
+    "avaliation_criteria": string ou null
+  }}
+</SaidaEsperada>

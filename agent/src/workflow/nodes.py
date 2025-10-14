@@ -1,5 +1,10 @@
 from src.services import backend
 from src.workflow import decorators
+from src.workflow.utils import (
+    extract_json_from_llm_response,
+    create_json_instruction,
+    merge_pydantic_models,
+)
 from src.schemas.agent import State, FlowClassifier, Initiative
 from src.llms import default_llm
 
@@ -28,8 +33,39 @@ def classify_user_request_v1(state: State, prompt_template=None):
         return output
     except Exception as e:
         logging.error(
-            f"Failed to classify flow: {e}\n\nUsing default 'guide' flow type."
+            f"Failed to classify flow with structured output: {e}\nTrying manual JSON extraction..."
         )
+
+        try:
+            json_instruction = create_json_instruction(use_null=True)
+            response = default_llm.invoke(
+                state["messages"]
+                + [
+                    {
+                        "role": "system",
+                        "content": f"{prompt_template}\n\n{json_instruction}",
+                    },
+                ]
+            )
+
+            extracted = extract_json_from_llm_response(
+                response,
+                FlowClassifier,
+                fallback=FlowClassifier(flow_type="direcionar"),
+            )
+
+            if extracted:
+                output = {"flow_type": extracted.flow_type}
+                logging.info(
+                    f"Successfully classified using manual extraction: {extracted.flow_type}"
+                )
+                return output
+
+        except Exception as fallback_error:
+            logging.error(
+                f"Fallback also failed: {fallback_error}\nUsing default 'guide' flow type."
+            )
+
         output = {"flow_type": "guide"}
         return output
 
@@ -104,16 +140,21 @@ def extract_initiative_v1(state: State, prompt_template=None, add_comportamental
     new_initiative = state.get("initiative") or Initiative(
         title=None, theme=None, context=None, deliverable=None, avaliation_criteria=None
     )
-    classifier_llm = default_llm.with_structured_output(Initiative)
     try:
-        prompt_content = (prompt_template or "").format(
-            TITLE=new_initiative.title,
-            CONTEXT=new_initiative.context,
-            THEME=new_initiative.theme,
-            DELIVERABLE=new_initiative.deliverable,
-            AVALIATION_CRITERIA=new_initiative.avaliation_criteria,
+        json_instruction = create_json_instruction(use_null=True)
+        prompt_content = (
+            (prompt_template or "").format(
+                TITLE=new_initiative.title,
+                CONTEXT=new_initiative.context,
+                THEME=new_initiative.theme,
+                DELIVERABLE=new_initiative.deliverable,
+                AVALIATION_CRITERIA=new_initiative.avaliation_criteria,
+            )
+            + "\n\n"
+            + json_instruction
         )
-        result = classifier_llm.invoke(
+
+        response = default_llm.invoke(
             state["messages"]
             + [
                 {
@@ -122,21 +163,28 @@ def extract_initiative_v1(state: State, prompt_template=None, add_comportamental
                 },
             ]
         )
-        logging.debug(f"Extracted initiative: {result}")
-        updated_initiative = Initiative(
-            title=getattr(result, "title") or new_initiative.title,
-            context=getattr(result, "context") or new_initiative.context,
-            theme=getattr(result, "theme") or new_initiative.theme,
-            deliverable=getattr(result, "deliverable") or new_initiative.deliverable,
-            avaliation_criteria=getattr(result, "avaliation_criteria")
-            or new_initiative.avaliation_criteria,
+
+        extracted_initiative = extract_json_from_llm_response(
+            response, Initiative, fallback=None
         )
-        output = {"initiative": updated_initiative}
+
+        if extracted_initiative:
+            updated_initiative = merge_pydantic_models(
+                new_initiative, extracted_initiative.model_dump()
+            )
+            output = {"initiative": updated_initiative}
+            return output
+
+        logging.warning(
+            "Could not extract initiative from response, keeping previous values"
+        )
+        output = {"initiative": new_initiative}
         return output
+
     except Exception as e:
         tb = traceback.format_exc()
         logging.error(
-            f"Failed to classify initiative: {e}\nTraceback:\n{tb}\nState: {state}\nPrompt: {prompt_content if 'prompt_content' in locals() else 'N/A'}"
+            f"Failed to extract initiative: {e}\nTraceback:\n{tb}\nState: {state}"
         )
         output = {"initiative": new_initiative}
         return output
