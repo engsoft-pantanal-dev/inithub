@@ -111,7 +111,7 @@ const ChatMessages = ({ onInitiativeUpdate }: Props) => {
                     text: "Desculpe, houve um problema de conexão. Tente novamente.",
                 },
             ]);
-        }, 30000);
+        }, 60000);
         
         // Send to agent
         agentService.sendMessage(text);
