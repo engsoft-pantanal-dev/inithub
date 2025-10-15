@@ -6,6 +6,7 @@ import { AuthContext } from '../hooks/useAuth';
 import type { AuthContextType } from '../hooks/useAuth';
 import type { User } from '../types/user';
 import api from '../services/api';
+import { agentService } from '../services/agent';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const navigate = useNavigate();
@@ -19,6 +20,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .get('/auth/profile')
         .then((response) => {
           setUser(response.data);
+          agentService.setUser(response.data.id);
         })
         .catch(() => {
           localStorage.removeItem('accessToken');
@@ -39,7 +41,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       const userResponse = await api.get('/auth/profile');
       setUser(userResponse.data);
-
+      agentService.setUser(userResponse.data.id);
     } catch (error) {
       console.error('Falha no login', error);
       throw error;
@@ -49,6 +51,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = () => {
     setUser(null);
     localStorage.removeItem('accessToken');
+    agentService.setUser('');
     navigate('/login');
   };
 

@@ -20,13 +20,14 @@ llm_manager = LLMManager()
 @app.websocket("/ws/v1/agent")
 async def websocket_endpoint(
     websocket: WebSocket,
-    user_id: str = Query(default="anonymous"),
-    session_id: str = Query(None),
+    user_id: str = Query(default=None),
+    session_id: str = Query(default=None),
 ):
     await websocket.accept()
 
-    if not user_id or user_id == "anonymous":
+    if not user_id:
         user_id = f"anonymous-{id(websocket)}"
+        print(f"🔓 Anonymous user connected: {user_id}")
 
     if session_id:
         state = session_manager.get_state(session_id)
