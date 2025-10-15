@@ -6,7 +6,7 @@ from src.workflow.utils import (
     merge_pydantic_models,
 )
 from src.schemas.agent import State, FlowClassifier, Initiative
-from src.llms import default_llm
+from src.llms import get_global_llm
 
 import logging
 import traceback
@@ -18,7 +18,8 @@ PROMPTS_DIR = "prompts"
 @decorators.log_node
 @decorators.with_prompt()
 def classify_user_request_v1(state: State, prompt_template=None):
-    classifier_llm = default_llm.with_structured_output(FlowClassifier)
+    global_llm = get_global_llm()
+    classifier_llm = global_llm.with_structured_output(FlowClassifier)
     try:
         result = classifier_llm.invoke(
             state["messages"]
@@ -38,7 +39,7 @@ def classify_user_request_v1(state: State, prompt_template=None):
 
         try:
             json_instruction = create_json_instruction(use_null=True)
-            response = default_llm.invoke(
+            response = global_llm.invoke(
                 state["messages"]
                 + [
                     {
@@ -86,8 +87,9 @@ def route_user_request(state: State):
 @decorators.with_prompt()
 @decorators.send_test_case()
 def guide_v1(state: State, prompt_template=None, add_comportamentals=True):
+    global_llm = get_global_llm()
     result = {
-        "messages": default_llm.invoke(
+        "messages": global_llm.invoke(
             state["messages"]
             + [
                 {
@@ -104,6 +106,7 @@ def guide_v1(state: State, prompt_template=None, add_comportamentals=True):
 @decorators.with_prompt()
 @decorators.send_test_case()
 def register_initiative_v1(state: State, prompt_template=None):
+    global_llm = get_global_llm()
     initiative = state.get("initiative")
 
     similar_initiatives = (
@@ -120,7 +123,7 @@ def register_initiative_v1(state: State, prompt_template=None):
     )
 
     result = {
-        "messages": default_llm.invoke(
+        "messages": global_llm.invoke(
             state["messages"]
             + [
                 {
@@ -137,6 +140,7 @@ def register_initiative_v1(state: State, prompt_template=None):
 @decorators.log_node
 @decorators.with_prompt()
 def extract_initiative_v1(state: State, prompt_template=None, add_comportamentals=True):
+    global_llm = get_global_llm()
     new_initiative = state.get("initiative") or Initiative(
         title=None, theme=None, context=None, deliverable=None, avaliation_criteria=None
     )
@@ -154,7 +158,7 @@ def extract_initiative_v1(state: State, prompt_template=None, add_comportamental
             + json_instruction
         )
 
-        response = default_llm.invoke(
+        response = global_llm.invoke(
             state["messages"]
             + [
                 {
@@ -165,7 +169,9 @@ def extract_initiative_v1(state: State, prompt_template=None, add_comportamental
         )
 
         extracted_initiative = extract_json_from_llm_response(
-            response, Initiative, fallback=None
+            response,
+            Initiative,
+            fallback=None,
         )
 
         if extracted_initiative:
@@ -194,6 +200,7 @@ def extract_initiative_v1(state: State, prompt_template=None, add_comportamental
 @decorators.with_prompt()
 @decorators.send_test_case()
 def find_initiative_v1(state: State, prompt_template=None, add_comportamentals=True):
+    global_llm = get_global_llm()
     initiative = state.get("initiative")
 
     similar_initiatives = (
@@ -207,7 +214,7 @@ def find_initiative_v1(state: State, prompt_template=None, add_comportamentals=T
     logging.info(f"PROMP_FIND_INITIATIVE: {prompt_content}")
 
     result = {
-        "messages": default_llm.invoke(
+        "messages": global_llm.invoke(
             state["messages"]
             + [
                 {

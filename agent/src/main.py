@@ -1,3 +1,4 @@
+from src.llms import LLMManager, set_session_llm
 from src.workflow.chain import chain
 from src.config import logger
 from src.schemas.agent import State
@@ -12,6 +13,8 @@ import json
 app = FastAPI()
 
 logger.setup_logging()
+
+llm_manager = LLMManager()
 
 
 @app.websocket("/ws/v1/agent")
@@ -33,6 +36,9 @@ async def websocket_endpoint(
     else:
         session_id = session_manager.create_session(user_id)
         state = session_manager.get_state(session_id)
+        session_llm = llm_manager.get_llm()
+        set_session_llm(session_llm)
+        print(f"🔄 New LLM assigned for session {session_id}: {session_llm.model_name}")
 
     if not state:
         print(f"❌ Failed to create/get state for user {user_id}")
