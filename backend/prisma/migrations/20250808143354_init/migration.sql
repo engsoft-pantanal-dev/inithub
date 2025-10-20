@@ -5,6 +5,7 @@ CREATE TYPE "InitiativeStatus" AS ENUM ('PENDING', 'APPROVED', 'REJECTED', 'IN_E
 CREATE TABLE "users" (
     "id" TEXT NOT NULL,
     "email" TEXT NOT NULL,
+    "password" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "department" TEXT,
     "emojiAvatar" TEXT NOT NULL DEFAULT '👤',

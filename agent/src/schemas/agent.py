@@ -37,4 +37,7 @@ class Initiative(BaseModel):
 class State(TypedDict):
     messages: Annotated[list, add_messages]
     initiative: Initiative | None
+    similar_initiatives: list | None
     flow_type: str | None
+    user_id: str | None
+    session_id: str | None

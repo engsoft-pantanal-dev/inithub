@@ -1,35 +1,67 @@
 import { Injectable } from '@nestjs/common';
 import OpenAI from 'openai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class EmbeddingsService {
-  private client: OpenAI;
-  private model = 'text-embedding-3-small'; // 1536 dims
+  private openAIClient: OpenAI;
+  private geminiClient: GoogleGenerativeAI;
+  private openAIModel = 'text-embedding-3-small';
+  private geminiModel = 'models/text-embedding-004';
+  private provider: 'openai' | 'gemini';
 
   constructor(private prisma: PrismaService) {
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      // We avoid throwing here to keep app booting for non-embedding paths
-      // but attempts to embed will fail with a descriptive error.
-      return;
+    this.provider = (process.env.EMBEDDING_PROVIDER as 'openai' | 'gemini') || 'openai';
+
+    if (this.provider === 'openai') {
+      const apiKey = process.env.OPENAI_API_KEY;
+      if (!apiKey) {
+        // We avoid throwing here to keep app booting for non-embedding paths
+        // but attempts to embed will fail with a descriptive error.
+        return;
+      }
+      this.openAIClient = new OpenAI({ apiKey });
+    } else if (this.provider === 'gemini') {
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (apiKey) {
+        this.geminiClient = new GoogleGenerativeAI(apiKey);
+      }
     }
-    this.client = new OpenAI({ apiKey });
   }
 
   private ensureClient() {
-    if (!this.client) {
+    if (this.provider === 'openai' && !this.openAIClient) {
       throw new Error('OPENAI_API_KEY is not set. Please configure it in your environment.');
+    }
+    if (this.provider === 'gemini' && !this.geminiClient) {
+      throw new Error('GEMINI_API_KEY is not set. Please configure it in your environment.');
     }
   }
 
   async embedText(text: string): Promise<number[]> {
     this.ensureClient();
-    const res = await this.client.embeddings.create({
-      model: this.model,
-      input: text,
-    });
-    return res.data[0].embedding as unknown as number[];
+
+    if (this.provider === 'openai') {
+      const res = await this.openAIClient.embeddings.create({
+        model: this.openAIModel,
+        input: text,
+      });
+
+      return res.data[0].embedding as unknown as number[];
+    } else if (this.provider === 'gemini') {
+      try {
+        const model = this.geminiClient.getGenerativeModel({ model: this.geminiModel });
+        const result = await model.embedContent(text, );
+
+        return result.embedding.values;
+      } catch (err: any) {
+        console.error('[EmbeddingsService] Gemini embedding error:', err);
+        throw new Error('GEMINI_EMBEDDING_ERROR: ' + (err?.message || err));
+      }
+    } else {
+      throw new Error('Unknown embedding provider');
+    }
   }
 
   async generateAndStoreInitiativeEmbedding(initiative: {
@@ -52,7 +84,7 @@ export class EmbeddingsService {
       .filter(Boolean)
       .join('\n');
 
-    if (!text) return; // nothing to embed
+    if (!text) return;
 
     try {
       const vector = await this.embedText(text);
@@ -63,23 +95,24 @@ export class EmbeddingsService {
         initiative.id,
       );
     } catch (e) {
-      // Swallow errors to avoid blocking flows; log in the future if needed
+      console.error('[EmbeddingsService] Error generating/storing embedding:', e);
     }
   }
 
   async searchSimilarText(text: string, limit = 10) {
     const vector = await this.embedText(text);
     const vectorLiteral = `[${vector.join(',')}]`;
-    // Return only id and distance to keep payload lean
-    const rows = await this.prisma.$queryRawUnsafe<Array<{ id: string; distance: number }>>(
+    
+    const rows: Array<{ id: string; distance: number }> = await this.prisma.$queryRawUnsafe(
       `SELECT id, (embedding <-> $1::vector) AS distance
-       FROM "initiatives"
-       WHERE embedding IS NOT NULL
-       ORDER BY embedding <-> $1::vector ASC
-       LIMIT $2`,
+      FROM "initiatives"
+      WHERE embedding IS NOT NULL
+      ORDER BY embedding <-> $1::vector ASC
+      LIMIT $2`,
       vectorLiteral,
       limit,
     );
+
     return rows;
   }
 
@@ -92,9 +125,8 @@ export class EmbeddingsService {
       include: { _count: { select: { likes: true, comments: true } } },
     });
     const map = new Map(initiatives.map((i) => [i.id, i]));
-    // Preserve similarity order, attach distance
     return idsWithScores
       .map(({ id, distance }) => ({ distance, initiative: map.get(id) }))
       .filter((x) => x.initiative);
-  }
+  }
 }

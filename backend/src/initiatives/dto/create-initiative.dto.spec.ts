@@ -6,7 +6,6 @@ describe('CreateInitiativeDto', () => {
     const dto = new CreateInitiativeDto();
     dto.title = 'Test Initiative';
     dto.description = 'Test Description';
-    dto.authorId = 'user123';
     dto.theme = 'Technology';
     dto.context = 'Test Context';
     dto.deliverable = 'Test Deliverable';
@@ -19,7 +18,6 @@ describe('CreateInitiativeDto', () => {
   it('should fail validation when title is missing', async () => {
     const dto = new CreateInitiativeDto();
     dto.description = 'Test Description';
-    dto.authorId = 'user123';
     dto.theme = 'Technology';
     dto.context = 'Test Context';
     dto.deliverable = 'Test Deliverable';
@@ -34,7 +32,6 @@ describe('CreateInitiativeDto', () => {
     const dto = new CreateInitiativeDto();
     dto.title = '';
     dto.description = 'Test Description';
-    dto.authorId = 'user123';
     dto.theme = 'Technology';
     dto.context = 'Test Context';
     dto.deliverable = 'Test Deliverable';
@@ -48,26 +45,20 @@ describe('CreateInitiativeDto', () => {
 
   it('should fail validation when title is only whitespace', async () => {
     const dto = new CreateInitiativeDto();
-    dto.title = '   '; // Apenas espaços - deveria falhar mas class-validator aceita
+    dto.title = '   '; 
     dto.description = 'Test description';
     dto.theme = 'Test theme';
-    dto.authorId = 'test-author-id';
     dto.context = 'Test context';
     dto.deliverable = 'Test deliverable';
     dto.evaluationCriteria = 'Test criteria';
 
     const errors = await validate(dto);
-    // NOTA: Este teste documenta uma limitação do @IsNotEmpty()
-    // SOLUÇÃO: Para validação mais rigorosa, adicionar no DTO:
-    // @Transform(({ value }) => value?.trim())
-    // @IsNotEmpty() // Agora falharia com strings só de espaços
-    expect(errors).toHaveLength(0); // Comportamento atual do class-validator
+    expect(errors).toHaveLength(0);
   });
 
   it('should fail validation when description is missing', async () => {
     const dto = new CreateInitiativeDto();
     dto.title = 'Test Initiative';
-    dto.authorId = 'user123';
     dto.theme = 'Technology';
     dto.context = 'Test Context';
     dto.deliverable = 'Test Deliverable';
@@ -78,25 +69,10 @@ describe('CreateInitiativeDto', () => {
     expect(errors[0].property).toBe('description');
   });
 
-  it('should fail validation when authorId is missing', async () => {
-    const dto = new CreateInitiativeDto();
-    dto.title = 'Test Initiative';
-    dto.description = 'Test Description';
-    dto.theme = 'Technology';
-    dto.context = 'Test Context';
-    dto.deliverable = 'Test Deliverable';
-    dto.evaluationCriteria = 'Test Criteria';
-
-    const errors = await validate(dto);
-    expect(errors).toHaveLength(1);
-    expect(errors[0].property).toBe('authorId');
-  });
-
   it('should fail validation when theme is missing', async () => {
     const dto = new CreateInitiativeDto();
     dto.title = 'Test Initiative';
     dto.description = 'Test Description';
-    dto.authorId = 'user123';
     dto.context = 'Test Context';
     dto.deliverable = 'Test Deliverable';
     dto.evaluationCriteria = 'Test Criteria';
@@ -110,7 +86,6 @@ describe('CreateInitiativeDto', () => {
     const dto = new CreateInitiativeDto();
     dto.title = 'Test Initiative';
     dto.description = 'Test Description';
-    dto.authorId = 'user123';
     dto.theme = 'Technology';
     dto.deliverable = 'Test Deliverable';
     dto.evaluationCriteria = 'Test Criteria';
@@ -124,7 +99,6 @@ describe('CreateInitiativeDto', () => {
     const dto = new CreateInitiativeDto();
     dto.title = 'Test Initiative';
     dto.description = 'Test Description';
-    dto.authorId = 'user123';
     dto.theme = 'Technology';
     dto.context = 'Test Context';
     dto.evaluationCriteria = 'Test Criteria';
@@ -138,7 +112,6 @@ describe('CreateInitiativeDto', () => {
     const dto = new CreateInitiativeDto();
     dto.title = 'Test Initiative';
     dto.description = 'Test Description';
-    dto.authorId = 'user123';
     dto.theme = 'Technology';
     dto.context = 'Test Context';
     dto.deliverable = 'Test Deliverable';
@@ -152,25 +125,22 @@ describe('CreateInitiativeDto', () => {
     const dto = new CreateInitiativeDto();
     dto.title = '';
     dto.description = '';
-    dto.authorId = '';
     dto.theme = 'Technology';
     dto.context = 'Test Context';
     dto.deliverable = 'Test Deliverable';
     dto.evaluationCriteria = 'Test Criteria';
 
     const errors = await validate(dto);
-    expect(errors).toHaveLength(3);
+    expect(errors).toHaveLength(2);
     const errorProperties = errors.map(error => error.property);
     expect(errorProperties).toContain('title');
     expect(errorProperties).toContain('description');
-    expect(errorProperties).toContain('authorId');
   });
 
   it('should fail validation when fields are not strings', async () => {
     const dto = new CreateInitiativeDto();
     (dto as any).title = 123;
     (dto as any).description = ['array'];
-    dto.authorId = 'user123';
     dto.theme = 'Technology';
     dto.context = 'Test Context';
     dto.deliverable = 'Test Deliverable';
@@ -189,7 +159,6 @@ describe('CreateInitiativeDto', () => {
     const dto = new CreateInitiativeDto();
     dto.title = longString;
     dto.description = longString;
-    dto.authorId = 'user123';
     dto.theme = longString;
     dto.context = longString;
     dto.deliverable = longString;
@@ -203,7 +172,6 @@ describe('CreateInitiativeDto', () => {
     const dto = new CreateInitiativeDto();
     dto.title = 'Test Initiative with émojis 🚀 and spëcial chars!';
     dto.description = 'Dëscription with açcents and @#$%^&*()';
-    dto.authorId = 'user-123_test';
     dto.theme = 'Tëchnology & Innovation';
     dto.context = 'Context with números 123 and símbolos';
     dto.deliverable = 'Deliverable with quotes "test" and apostrophes';

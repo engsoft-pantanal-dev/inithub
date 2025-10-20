@@ -18,7 +18,7 @@ services:
             node dist/src/main.js"
     networks:
       - init-hub-network
-
+    
   agent:
     build:
       context: ./agent
@@ -44,7 +44,6 @@ services:
     env_file: "./.env"
     volumes:
       - ./frontend:/app
-      - /app/node_modules
     environment:
       - CHOKIDAR_USEPOLLING=true
     networks:

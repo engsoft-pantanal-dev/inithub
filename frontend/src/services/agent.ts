@@ -12,6 +12,8 @@ export type ChatInitiative = {
 export type AgentPayload = {
   message: string;
   initiative?: any | null;
+  session_id?: string;
+  user_id?: string;
 };
 
 function mapInitiative(src: any): ChatInitiative {
@@ -29,17 +31,55 @@ function mapInitiative(src: any): ChatInitiative {
 
 class AgentService {
   private ws: WebSocket | null = null;
-  private listeners = new Set<(data: { message: string; initiative: ChatInitiative | null }) => void>();
+  private listeners = new Set<(data: { message: string; initiative: ChatInitiative | null; session_id?: string; user_id?: string }) => void>();
+  private userId: string | null = null;
+  private sessionId: string | null = null;
 
   private getUrl(): string {
-    // Vite env var fallback to known default
-    const url = (import.meta as any).env?.VITE_AGENT_WS_URL || 'ws://localhost:8000/ws/v1/agent';
-    return url as string;
+    const baseUrl = (import.meta as any).env?.VITE_AGENT_WS_URL || 'ws://localhost:8000/ws/v1/agent';
+    const params = new URLSearchParams();
+    
+    if (this.userId) {
+      params.append('user_id', this.userId);
+    }
+    if (this.sessionId) {
+      params.append('session_id', this.sessionId);
+    }
+    
+    return params.toString() ? `${baseUrl}?${params.toString()}` : baseUrl;
+  }
+
+  setUser(userId: string, sessionId?: string): void {
+    this.userId = userId;
+    this.sessionId = sessionId || null;
+
+    if (this.ws) {
+      this.ws.close();
+      this.ws = null;
+    }
+  }
+
+  isUserSet(): boolean {
+    return !!this.userId;
+  }
+
+  reconnect(): void {
+    if (this.ws) {
+      this.ws.close();
+      this.ws = null;
+    }
+    if (this.userId) {
+      this.connect();
+    }
   }
 
   connect(): WebSocket {
     if (this.ws && (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) {
       return this.ws;
+    }
+
+    if (!this.userId) {
+      console.log('AgentService: Connecting without user_id (will use anonymous session)');
     }
 
     this.ws = new WebSocket(this.getUrl());
@@ -48,17 +88,21 @@ class AgentService {
       try {
         const raw = JSON.parse(event.data) as AgentPayload;
         const initiative = raw.initiative ? mapInitiative(raw.initiative) : null;
-        this.listeners.forEach((cb) => cb({ message: raw.message, initiative }));
+        if (raw.session_id) {
+          this.sessionId = raw.session_id;
+        }
+        this.listeners.forEach((cb) => cb({ 
+          message: raw.message, 
+          initiative,
+          session_id: raw.session_id,
+          user_id: raw.user_id
+        }));
       } catch (e) {
         console.error('Failed to parse agent message', e);
       }
     };
 
-    this.ws.onclose = () => {
-      // Optionally auto-reconnect later if desired
-      // For now, leave as manual reconnect via connect()
-    };
-
+    this.ws.onclose = () => {};
     return this.ws;
   }
 
@@ -79,7 +123,7 @@ class AgentService {
     }
   }
 
-  subscribe(handler: (data: { message: string; initiative: ChatInitiative | null }) => void): () => void {
+  subscribe(handler: (data: { message: string; initiative: ChatInitiative | null; session_id?: string; user_id?: string }) => void): () => void {
     this.listeners.add(handler);
     return () => this.listeners.delete(handler);
   }

@@ -1,28 +1,28 @@
 import { useEffect, useState } from 'react';
 import InitiativeCard from '@/components/features/initiatives/InitiativeCard';
 import { initiativesService } from '@/services/initiatives';
-import { authService } from '@/services/auth';
+// import { authService } from '@/services/auth'; // <-- 1. REMOVIDO
+import { useAuth } from '@/hooks/useAuth'; // <-- 2. ADICIONADO
 import type { Initiative } from '@/types/initiative';
 
 const MyInitiatives = () => {
     const [initiatives, setInitiatives] = useState<Initiative[]>([]);
     const [managedInitiatives, setManagedInitiatives] = useState<Initiative[]>([]);
     const [loading, setLoading] = useState(true);
+    const { user } = useAuth();
 
     useEffect(() => {
         const fetchInitiatives = async () => {
-            try {
-                const user = authService.getUserFromLocalStorage();
-                if (!user) {
-                    console.error('Usuário não encontrado no localStorage');
-                    setLoading(false);
-                    return;
-                }
+            if (!user) {
+                setLoading(false);
+                return;
+            }
 
-                const userInitiatives = await initiativesService.getUserInitiatives(user.id);
+            try {
+                const userInitiatives = await initiativesService.getUserInitiatives();
                 setInitiatives(userInitiatives);
 
-                const managed = await initiativesService.getUserManagedInitiatives(user.id);
+                const managed = await initiativesService.getUserManagedInitiatives();
                 setManagedInitiatives(managed);
             } catch (error) {
                 console.error('Erro ao buscar iniciativas:', error);
@@ -30,9 +30,13 @@ const MyInitiatives = () => {
                 setLoading(false);
             }
         };
+        if (user) {
+          fetchInitiatives();
+        } else {
+          setLoading(false);
+        }
 
-        fetchInitiatives();
-    }, []);
+    }, [user]);
 
     return (
         <div className="min-h-screen bg-gray-50">
