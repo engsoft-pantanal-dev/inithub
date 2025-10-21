@@ -32,7 +32,7 @@ const Header = () => {
   return (
     <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-20">
       <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2" onClick={() => navigate("/home")}>
           <img src="/images/logo-inithub.svg" alt="Innovation Hub Logo" className="h-10" />
         </div>
 

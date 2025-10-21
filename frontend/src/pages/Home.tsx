@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { MessageCircle } from 'lucide-react';
 import InitiativeCard from '@/components/features/initiatives/InitiativeCard';
 import Filters from '@/components/features/filters/Filters';
 import Aside from '@/components/layout/Aside';
@@ -81,6 +83,15 @@ const Home = () => {
           </div>
         </div>
       </div>
+
+      <Link
+        to="/create-initiative"
+        className="fixed bottom-6 right-6 bg-[var(--green-primary)] text-white p-4 rounded-full shadow-xl hover:bg-green-700 transition transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--green-primary)]"
+        aria-label="Conversar com o assistente"
+      >
+        <MessageCircle className="w-6 h-6" />
+        <span className="sr-only">Abrir chat com o assistente</span>
+      </Link>
     </div>
   );
 };
