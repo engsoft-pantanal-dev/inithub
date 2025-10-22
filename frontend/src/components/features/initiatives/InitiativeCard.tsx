@@ -9,15 +9,22 @@ import type { Initiative } from "@/types/initiative";
 interface InitiativeCardProps {
   initiative: Initiative;
   isManaged?: boolean;
+  canEdit?: boolean;
+  onEdit?: (initiative: Initiative) => void;
 }
 
-const InitiativeCard = ({ initiative, isManaged = false }: InitiativeCardProps) => {
+const InitiativeCard = ({ initiative, isManaged = false, canEdit = false, onEdit }: InitiativeCardProps) => {
   const [showComments, setShowComments] = useState(false);
   const [localInitiative, setLocalInitiative] = useState(initiative);
 
   useEffect(() => {
     setLocalInitiative(initiative);
   }, [initiative]);
+
+  const handleEdit = () => {
+    if (!onEdit) return;
+    onEdit(localInitiative);
+  };
 
   return (
     <div className="bg-white rounded-lg lg:rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200">
@@ -48,6 +55,8 @@ const InitiativeCard = ({ initiative, isManaged = false }: InitiativeCardProps) 
         initiative={localInitiative} 
         onToggleComments={() => setShowComments(!showComments)}
         isManaged={isManaged}
+        canEdit={canEdit}
+        onEdit={handleEdit}
       />
     </div>
   );
