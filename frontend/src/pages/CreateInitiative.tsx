@@ -24,19 +24,6 @@ const CreateInitiative = () => {
         setModalOpen(true);
     };
 
-    useEffect(() => {
-        const handleAgentPublishRequest = (event: CustomEvent) => {
-            console.log('Agent requested publish:', event.detail);
-            handlePublish();
-        };
-
-        window.addEventListener('agent-publish-request', handleAgentPublishRequest as EventListener);
-        
-        return () => {
-            window.removeEventListener('agent-publish-request', handleAgentPublishRequest as EventListener);
-        };
-    }, [initiative, user]);
-
     const handlePublish = useCallback(async () => {
         const i = initiative;
         if (!i) {
@@ -85,6 +72,19 @@ const CreateInitiative = () => {
             openModal("Erro", msg);
         }
     }, [initiative, user]);
+
+    useEffect(() => {
+        const handleAgentPublishRequest = (event: CustomEvent) => {
+            console.log('Agent requested publish:', event.detail);
+            handlePublish();
+        };
+
+        window.addEventListener('agent-publish-request', handleAgentPublishRequest as EventListener);
+        
+        return () => {
+            window.removeEventListener('agent-publish-request', handleAgentPublishRequest as EventListener);
+        };
+    }, [handlePublish]);
 
     return (
         <div className="min-h-screen max-w-6xl mx-auto px-4 py-8 h-full">
