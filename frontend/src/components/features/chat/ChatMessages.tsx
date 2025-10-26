@@ -37,7 +37,7 @@ const ChatMessages = ({ onInitiativeUpdate }: Props) => {
             try {
                 agentService.connect();
                 
-                unsubscribe = agentService.subscribe(({ message, initiative }) => {
+                unsubscribe = agentService.subscribe(({ message, initiative, publish_requested }) => {
                     if (typingTimeoutRef.current) {
                         clearTimeout(typingTimeoutRef.current);
                         typingTimeoutRef.current = null;
@@ -53,6 +53,12 @@ const ChatMessages = ({ onInitiativeUpdate }: Props) => {
                         },
                     ]);
                     onInitiativeUpdate?.(initiative);
+                    
+                    if (publish_requested && initiative) {
+                        window.dispatchEvent(new CustomEvent('agent-publish-request', { 
+                            detail: { initiative } 
+                        }));
+                    }
                 });
                 
                 console.log('✅ Connected to agent service');

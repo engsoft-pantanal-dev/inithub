@@ -19,8 +19,11 @@ class SessionManager:
             "messages": [],
             "flow_type": None,
             "initiative": None,
+            "similar_initiatives": None,
             "user_id": user_id,
             "session_id": session_id,
+            "publish_requested": None,
+            "published_initiatives": [],
         }
 
         self._sessions[session_id] = {
@@ -37,10 +40,19 @@ class SessionManager:
         session = self._sessions.get(session_id)
         if session:
             session["last_activity"] = time.time()
+            self.logger.debug(f"Session {session_id} found, updated last_activity")
+        else:
+            self.logger.debug(
+                f"Session {session_id} not found in {len(self._sessions)} active sessions"
+            )
         return session
 
     def get_state(self, session_id: str) -> Optional[State]:
         session = self.get_session(session_id)
+        if session:
+            self.logger.debug(
+                f"Returning state for session {session_id} with {len(session['state'].get('messages', []))} messages"
+            )
         return session["state"] if session else None
 
     def update_state(self, session_id: str, new_state: State) -> bool:
@@ -78,6 +90,7 @@ class SessionManager:
         ]
 
         for session_id in expired_sessions:
+            self.logger.debug(f"🧹 Removing expired session {session_id}")
             self.delete_session(session_id)
 
         if expired_sessions:

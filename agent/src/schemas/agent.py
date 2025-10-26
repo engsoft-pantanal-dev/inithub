@@ -4,9 +4,16 @@ from typing import Literal, TypedDict, Annotated
 
 
 class FlowClassifier(BaseModel):
-    flow_type: Literal["direcionar", "consultar", "registrar"] = Field(
+    flow_type: Literal[
+        "direcionar", "consultar", "registrar", "publicar", "feedback"
+    ] = Field(
         ...,
-        description="Fluxo de conversa que o usuário deseja seguir, buscando direcionamento, consultando uma iniciativa existente ou registrando uma nova.",
+        description="""Fluxo de conversa que o usuário deseja seguir:
+direcionar (guia),
+consultar (buscar iniciativa),
+registrar (criar nova iniciativa) 
+publicar (confirmar publicação da iniciativa completa),
+feedback (coletar feedback sobre a iniciativa publicada).""",
     )
 
 
@@ -41,3 +48,5 @@ class State(TypedDict):
     flow_type: str | None
     user_id: str | None
     session_id: str | None
+    publish_requested: bool | None
+    published_initiatives: list[str]

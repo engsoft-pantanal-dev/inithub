@@ -79,6 +79,10 @@ def route_user_request(state: State):
         return {"next": "register_initiative"}
     elif flow_type == "consultar":
         return {"next": "find_initiative"}
+    elif flow_type == "publicar":
+        return {"next": "publish_initiative"}
+    elif flow_type == "feedback":
+        return {"next": "collect_feedback"}
 
     return {"next": "guide"}
 
@@ -97,7 +101,8 @@ def guide_v1(state: State, prompt_template=None, add_comportamentals=True):
                     "content": prompt_template,
                 }
             ],
-        )
+        ),
+        "publish_requested": False,
     }
     return result
 
@@ -133,7 +138,119 @@ def register_initiative_v1(state: State, prompt_template=None):
             ],
         ),
         "similar_initiatives": similar_initiatives,
+        "publish_requested": False,
     }
+    return result
+
+
+@decorators.log_node
+@decorators.with_prompt()
+@decorators.send_test_case()
+def collect_feedback_v1(state: State, prompt_template=None):
+    global_llm = get_global_llm()
+    initiative = state.get("initiative")
+
+    prompt_content = (prompt_template or "").format(
+        TITLE=getattr(initiative, "title", "sua iniciativa"),
+        THEME=getattr(initiative, "theme", "N/A"),
+        CONTEXT=getattr(initiative, "context", "N/A"),
+    )
+
+    result = {
+        "messages": global_llm.invoke(
+            state["messages"]
+            + [
+                {
+                    "role": "system",
+                    "content": prompt_content,
+                }
+            ],
+        ),
+        "publish_requested": False,
+    }
+
+    return result
+
+
+@decorators.log_node
+def publish_initiative_v1(state: State):
+    global_llm = get_global_llm()
+    initiative = state.get("initiative")
+    published_initiatives = state.get("published_initiatives", [])
+
+    if initiative and initiative.title and initiative.title in published_initiatives:
+        logging.warning(
+            f"Initiative '{initiative.title}' already published in this session, skipping duplicate publication"
+        )
+        result = {
+            "messages": global_llm.invoke(
+                [
+                    {
+                        "role": "system",
+                        "content": f"Informe ao usuário de forma amigável que a iniciativa '{initiative.title}' já foi publicada anteriormente nesta sessão e não precisa ser publicada novamente. Pergunte se ele gostaria de criar uma nova iniciativa ou fazer outra coisa.",
+                    }
+                ]
+            ),
+            "publish_requested": False,
+            "published_initiatives": published_initiatives,
+        }
+        return result
+
+    if not initiative or not all(
+        [
+            initiative.title,
+            initiative.theme,
+            initiative.context,
+            initiative.deliverable,
+            initiative.avaliation_criteria,
+        ]
+    ):
+        result = {
+            "messages": global_llm.invoke(
+                [
+                    {
+                        "role": "system",
+                        "content": "Responda ao usuário que a iniciativa não está completa e não pode ser publicada. Peça para ele preencher todos os campos primeiro (título, tema, contexto, entregável e critérios de avaliação).",
+                    }
+                ]
+            ),
+            "publish_requested": False,
+            "published_initiatives": published_initiatives,
+        }
+        return result
+
+    logging.info(
+        f"User requested to publish initiative '{initiative.title}' - Adding to published list"
+    )
+
+    prompt = f"""O usuário confirmou que deseja publicar a iniciativa '{initiative.title}'.
+
+Informe ao usuário de forma positiva que a publicação está sendo processada.
+
+Exemplos:
+- "Perfeito! ✅ Estou processando a publicação da sua iniciativa '{initiative.title}'."
+- "Ótimo! 🚀 Vou publicar '{initiative.title}' agora mesmo."
+- "Entendido! 📤 Publicando sua iniciativa '{initiative.title}'."
+"""
+
+    new_published_list = published_initiatives + [initiative.title]
+
+    result = {
+        "messages": global_llm.invoke(
+            [
+                {
+                    "role": "system",
+                    "content": prompt,
+                }
+            ]
+        ),
+        "publish_requested": True,
+        "published_initiatives": new_published_list,
+    }
+
+    logging.info(
+        f"Initiative '{initiative.title}' marked as published. Total published in session: {len(new_published_list)}"
+    )
     return result
 
 
@@ -224,6 +341,7 @@ def find_initiative_v1(state: State, prompt_template=None, add_comportamentals=T
             ],
         ),
         "similar_initiatives": similar_initiatives,
+        "publish_requested": False,
     }
 
     return result
