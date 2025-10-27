@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect } from "react";
+import React from "react";
 import ConversationAgent from "@/components/features/chat/ChatMessages";
 import PreviewPanel from "@/components/features/chat/ChatInitiativePreview"; 
 import type { ChatInitiative } from "@/services/agent";
@@ -7,24 +7,24 @@ import Modal from "@/ui/modal";
 import { useAuth } from "@/hooks/useAuth"; 
 
 const CreateInitiative = () => {
-    const [initiative, setInitiative] = useState<ChatInitiative | null>(null);
-    const [modalOpen, setModalOpen] = useState(false);
-    const [modalMessage, setModalMessage] = useState<string | undefined>(undefined);
-    const [modalTitle, setModalTitle] = useState<string | undefined>(undefined);
-    const [onConfirmAction, setOnConfirmAction] = useState<(() => void) | undefined>(
+    const [initiative, setInitiative] = React.useState<ChatInitiative | null>(null);
+    const [modalOpen, setModalOpen] = React.useState(false);
+    const [modalMessage, setModalMessage] = React.useState<string | undefined>(undefined);
+    const [modalTitle, setModalTitle] = React.useState<string | undefined>(undefined);
+    const [onConfirmAction, setOnConfirmAction] = React.useState<(() => void) | undefined>(
         undefined
     );
 
     const { user } = useAuth();
 
-    const openModal = (title?: string, message?: string, onConfirm?: () => void) => {
+    const openModal = React.useCallback((title?: string, message?: string, onConfirm?: () => void) => {
         setModalTitle(title);
         setModalMessage(message);
         setOnConfirmAction(() => onConfirm);
         setModalOpen(true);
-    };
+    }, []);
 
-    const handlePublish = useCallback(async () => {
+    const handlePublish = React.useCallback(async () => {
         const i = initiative;
         if (!i) {
             openModal("Atenção", "Nenhuma ideia para publicar.");
@@ -71,9 +71,9 @@ const CreateInitiative = () => {
             const msg = e?.message || "Falha ao publicar a ideia.";
             openModal("Erro", msg);
         }
-    }, [initiative, user]);
+    }, [initiative, user, openModal]);
 
-    useEffect(() => {
+    React.useEffect(() => {
         const handleAgentPublishRequest = (event: CustomEvent) => {
             console.log('Agent requested publish:', event.detail);
             handlePublish();
