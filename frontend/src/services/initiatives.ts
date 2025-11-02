@@ -209,6 +209,27 @@ class InitiativesService {
       throw error;
     }
   }
+
+  async updateInitiative(
+    id: string,
+    payload: Partial<{
+      title: string;
+      description: string;
+      theme: string;
+      context: string;
+      deliverable: string;
+      evaluationCriteria: string;
+      status: string;
+    }>
+  ): Promise<Initiative> {
+    try {
+      const response = await api.patch(`/initiatives/${id}`, payload);
+      return response.data as Initiative;
+    } catch (error) {
+      console.error(`Erro ao atualizar iniciativa ${id}:`, error);
+      throw error;
+    }
+  }
 }
 
 export const initiativesService = new InitiativesService();

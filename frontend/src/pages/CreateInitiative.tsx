@@ -1,38 +1,36 @@
-import { useCallback, useState, useEffect } from "react";
+import React from "react";
 import ConversationAgent from "@/components/features/chat/ChatMessages";
 import PreviewPanel from "@/components/features/chat/ChatInitiativePreview"; 
 import type { ChatInitiative } from "@/services/agent";
 import { initiativesService } from "@/services/initiatives";
-import { agentService } from "@/services/agent";
 import Modal from "@/ui/modal";
 import { useAuth } from "@/hooks/useAuth"; 
 
 const CreateInitiative = () => {
-    const [initiative, setInitiative] = useState<ChatInitiative | null>(null);
-    const [modalOpen, setModalOpen] = useState(false);
-    const [modalMessage, setModalMessage] = useState<string | undefined>(undefined);
-    const [modalTitle, setModalTitle] = useState<string | undefined>(undefined);
-    const [onConfirmAction, setOnConfirmAction] = useState<(() => void) | undefined>(
+    const [initiative, setInitiative] = React.useState<ChatInitiative | null>(null);
+    const [modalOpen, setModalOpen] = React.useState(false);
+    const [modalMessage, setModalMessage] = React.useState<string | undefined>(undefined);
+    const [modalTitle, setModalTitle] = React.useState<string | undefined>(undefined);
+    const [onConfirmAction, setOnConfirmAction] = React.useState<(() => void) | undefined>(
         undefined
     );
 
-    const { user } = useAuth(); // <-- PONTO CHAVE 2: Pegar o usuário do contexto global
+    const { user } = useAuth();
 
-    const openModal = (title?: string, message?: string, onConfirm?: () => void) => {
+    const openModal = React.useCallback((title?: string, message?: string, onConfirm?: () => void) => {
         setModalTitle(title);
         setModalMessage(message);
         setOnConfirmAction(() => onConfirm);
         setModalOpen(true);
-    };
+    }, []);
 
-    const handlePublish = useCallback(async () => {
+    const handlePublish = React.useCallback(async () => {
         const i = initiative;
         if (!i) {
             openModal("Atenção", "Nenhuma ideia para publicar.");
             return;
         }
 
-        // --- PONTO CHAVE 3: Verificar se o usuário existe antes de continuar ---
         if (!user) {
             openModal("Erro de Autenticação", "Sua sessão expirou ou é inválida. Por favor, faça login novamente.");
             return;
@@ -56,7 +54,6 @@ const CreateInitiative = () => {
         }
 
         try {
-            // --- PONTO CHAVE 4: Chamar o serviço com a assinatura correta ---
             await initiativesService.createInitiative(
                 {
                     title: String(i.title),
@@ -66,17 +63,28 @@ const CreateInitiative = () => {
                     deliverable: String(i.deliverable),
                     evaluationCriteria: String(i.evaluationCriteria),
                 },
-                user.id // Passa o ID do usuário logado do nosso hook
+                user.id
             );
 
-            openModal("Sucesso", "Ideia publicada com sucesso!", () => {
-                window.location.reload();
-            });
+            openModal("Sucesso", "Ideia publicada com sucesso!");
         } catch (e: any) {
             const msg = e?.message || "Falha ao publicar a ideia.";
             openModal("Erro", msg);
         }
-    }, [initiative, user]); // <-- PONTO CHAVE 5: Adicionar 'user' às dependências
+    }, [initiative, user, openModal]);
+
+    React.useEffect(() => {
+        const handleAgentPublishRequest = (event: CustomEvent) => {
+            console.log('Agent requested publish:', event.detail);
+            handlePublish();
+        };
+
+        window.addEventListener('agent-publish-request', handleAgentPublishRequest as EventListener);
+        
+        return () => {
+            window.removeEventListener('agent-publish-request', handleAgentPublishRequest as EventListener);
+        };
+    }, [handlePublish]);
 
     return (
         <div className="min-h-screen max-w-6xl mx-auto px-4 py-8 h-full">
@@ -86,7 +94,6 @@ const CreateInitiative = () => {
                 </div>
             
                 <div className="bg-slate-50 lg:col-span-2">
-                    {/* O onPublish agora passa a função handlePublish corrigida */}
                     <PreviewPanel initiative={initiative} onChange={setInitiative} onPublish={handlePublish} />
                 </div>
             </div>

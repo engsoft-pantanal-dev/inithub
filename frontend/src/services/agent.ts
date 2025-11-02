@@ -14,6 +14,7 @@ export type AgentPayload = {
   initiative?: any | null;
   session_id?: string;
   user_id?: string;
+  publish_requested?: boolean;
 };
 
 function mapInitiative(src: any): ChatInitiative {
@@ -31,7 +32,7 @@ function mapInitiative(src: any): ChatInitiative {
 
 class AgentService {
   private ws: WebSocket | null = null;
-  private listeners = new Set<(data: { message: string; initiative: ChatInitiative | null; session_id?: string; user_id?: string }) => void>();
+  private listeners = new Set<(data: { message: string; initiative: ChatInitiative | null; session_id?: string; user_id?: string; publish_requested?: boolean }) => void>();
   private userId: string | null = null;
   private sessionId: string | null = null;
 
@@ -51,7 +52,6 @@ class AgentService {
 
   setUser(userId: string, sessionId?: string): void {
     this.userId = userId;
-    this.sessionId = sessionId || null;
 
     if (this.ws) {
       this.ws.close();
@@ -88,14 +88,17 @@ class AgentService {
       try {
         const raw = JSON.parse(event.data) as AgentPayload;
         const initiative = raw.initiative ? mapInitiative(raw.initiative) : null;
+        
         if (raw.session_id) {
           this.sessionId = raw.session_id;
         }
+        
         this.listeners.forEach((cb) => cb({ 
           message: raw.message, 
           initiative,
           session_id: raw.session_id,
-          user_id: raw.user_id
+          user_id: raw.user_id,
+          publish_requested: raw.publish_requested
         }));
       } catch (e) {
         console.error('Failed to parse agent message', e);
@@ -123,7 +126,7 @@ class AgentService {
     }
   }
 
-  subscribe(handler: (data: { message: string; initiative: ChatInitiative | null; session_id?: string; user_id?: string }) => void): () => void {
+  subscribe(handler: (data: { message: string; initiative: ChatInitiative | null; session_id?: string; user_id?: string; publish_requested?: boolean }) => void): () => void {
     this.listeners.add(handler);
     return () => this.listeners.delete(handler);
   }

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Heart, MessageCircle, Share2, Settings } from "lucide-react";
+import { ArrowRight, Heart, MessageCircle, Pencil, Share2, Settings } from "lucide-react";
 import { initiativesService } from "@/services/initiatives";
 import { useAuth } from "@/hooks/useAuth"; 
 import { getLikeButtonStyles } from "@/utils/functions/functionsInitiative";
@@ -10,9 +10,11 @@ interface ActionButtonsProps {
   initiative: Initiative;
   onToggleComments: () => void;
   isManaged?: boolean;
+  canEdit?: boolean;
+  onEdit?: () => void;
 }
 
-const ActionButtons = ({ initiative, onToggleComments, isManaged = false }: ActionButtonsProps) => {
+const ActionButtons = ({ initiative, onToggleComments, isManaged = false, canEdit = false, onEdit }: ActionButtonsProps) => {
   const navigate = useNavigate();
   const { user } = useAuth(); 
   
@@ -59,6 +61,11 @@ const ActionButtons = ({ initiative, onToggleComments, isManaged = false }: Acti
     }
   };
 
+  const handleEditClick = () => {
+    if (!onEdit) return;
+    onEdit();
+  };
+
   return (
     <div className="px-6 py-3 bg-gray-50 flex items-center justify-between">
         <div className="flex items-center space-x-6">
@@ -84,24 +91,36 @@ const ActionButtons = ({ initiative, onToggleComments, isManaged = false }: Acti
             </button>
         </div>
 
-        {initiative.status === "IN_EXECUTION" && (
-            <button 
-                className="flex items-center space-x-2 text-purple-600 hover:text-purple-800 font-medium text-sm transition-colors"
-                onClick={handleProgressClick}
-            >
-                {isManaged ? (
-                    <>
-                        <span>Gerenciar</span>
-                        <Settings className="w-3 h-3 sm:w-4 sm:h-4" />
-                    </>
-                ) : (
-                    <>
-                        <span>Progresso</span>
-                        <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4" />
-                    </>
-                )}
-            </button>
-        )}
+    <div className="flex items-center space-x-4">
+      {canEdit && (
+        <button
+          className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 font-medium text-sm transition-colors"
+          onClick={handleEditClick}
+        >
+          <span>Editar</span>
+          <Pencil className="w-4 h-4" />
+        </button>
+      )}
+
+      {initiative.status === "IN_EXECUTION" && (
+        <button 
+          className="flex items-center space-x-2 text-purple-600 hover:text-purple-800 font-medium text-sm transition-colors"
+          onClick={handleProgressClick}
+        >
+          {isManaged ? (
+            <>
+              <span>Gerenciar</span>
+              <Settings className="w-3 h-3 sm:w-4 sm:h-4" />
+            </>
+          ) : (
+            <>
+              <span>Progresso</span>
+              <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4" />
+            </>
+          )}
+        </button>
+      )}
+    </div>
     </div>
   );
 };

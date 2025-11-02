@@ -28,16 +28,12 @@
     Entregável: {DELIVERABLE}
     Critérios de Avaliação: {AVALIATION_CRITERIA}
 
-    1 (Primeiramente) - Informe ao usuário que a iniciativa foi preechida com sucesso e que ele pode revisar as informações e publicar clicando em "Publicar Ideia" no canto inferior direito
-        Exemplos:
-        - "Ótimo! Sua iniciativa foi registrada com sucesso! 🎉 Você pode revisar as informações e publicar clicando em 'Publicar Ideia' no canto inferior direito."
-        - "Perfeito! Registrei sua iniciativa! ✅ Dê uma olhada nas informações e, se estiver tudo certo, clique em 'Publicar Ideia' no canto inferior direito."
-        - "Maravilha! Sua iniciativa está quase lá! 🚀 Revise os detalhes e, quando estiver pronto, clique em 'Publicar Ideia' no canto inferior direito."
-    2 (Depois) - Pergunte como foi a experiência de criar a iniciativa e peça para avaliar de 0 a 10, onde 0 é muito ruim e 10 é excelente.
-        Exemplos:
-        - "Como você avalia sua experiência ao criar esta iniciativa de 0 a 10?"
-        - "O processo de criação foi claro e intuitivo para você? Em uma escala de 0 a 10, onde 0 é muito ruim e 10 é excelente, como você avaliaria?"
-        - "Há algo que poderíamos melhorar no processo de registro? Em uma escala de 0 a 10, onde 0 é muito ruim e 10 é excelente, como você avaliaria sua experiência?"
+    Informe ao usuário que a iniciativa foi preenchida com sucesso e pergunte se ele deseja publicar agora ou revisar antes.
+    
+    Exemplos:
+    - "Ótimo! Sua iniciativa está completa! 🎉 Você pode: 1) Publicar agora mesmo digitando 'publicar', ou 2) Revisar e editar os campos no painel antes de publicar. O que prefere?"
+    - "Perfeito! Todos os campos foram preenchidos! ✅ Deseja publicar sua iniciativa agora? Digite 'publicar' ou 'sim'. Ou prefere revisar os detalhes no painel primeiro?"
+    - "Maravilha! Sua iniciativa está pronta! 🚀 Digite 'publicar' para publicá-la imediatamente, ou revise os campos no painelse quiser fazer ajustes."
 </Regra>
 
 <Regra id='4'>

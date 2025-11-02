@@ -11,6 +11,8 @@ workflow.add_node("guide", nodes.guide_v1)
 workflow.add_node("find_initiative", nodes.find_initiative_v1)
 workflow.add_node("register_initiative", nodes.register_initiative_v1)
 workflow.add_node("extract_initiative", nodes.extract_initiative_v1)
+workflow.add_node("publish_initiative", nodes.publish_initiative_v1)
+workflow.add_node("collect_feedback", nodes.collect_feedback_v1)
 
 workflow.add_node("route_user_request", nodes.route_user_request)
 
@@ -24,11 +26,15 @@ workflow.add_conditional_edges(
         "guide": "guide",
         "find_initiative": "find_initiative",
         "register_initiative": "register_initiative",
+        "publish_initiative": "publish_initiative",
+        "collect_feedback": "collect_feedback",
     },
 )
 workflow.add_edge("guide", END)
 workflow.add_edge("find_initiative", END)
 workflow.add_edge("register_initiative", END)
+workflow.add_edge("publish_initiative", END)
+workflow.add_edge("collect_feedback", END)
 
 chain = workflow.compile()
 

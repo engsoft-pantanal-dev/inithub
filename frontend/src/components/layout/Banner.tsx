@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 const Banner = () => {
     return (
         <div className="h-screen w-full relative">
@@ -10,11 +12,17 @@ const Banner = () => {
             <div className="absolute bottom-8 flex flex-col md:flex-row gap-6 w-full px-8 items-center justify-center">
                 <div className="bg-white rounded-2xl py-0 p-6 shadow-lg flex items-center gap-4 flex-[1] max-w-[400px] mx-auto md:mx-0 h-full">
                     <div className="flex-shrink-0 w-full h-full max-w-[300px] max-h-[500px]">
-                        <img 
-                            src="/images/logo-comitiva.svg" 
-                            alt="Comitiva Pantaneira Logo" 
-                            className="w-full h-full object-contain"
-                        />
+                        <Link
+                            to="/home"
+                            className="block rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--green-primary)]"
+                            aria-label="Ir para a página inicial"
+                        >
+                            <img 
+                                src="/images/logo-comitiva.svg" 
+                                alt="Comitiva Pantaneira Logo" 
+                                className="w-full h-full object-contain transition-transform duration-150 ease-in-out hover:scale-105 cursor-pointer"
+                            />
+                        </Link>
                     </div>
                 </div>
 
@@ -22,7 +30,7 @@ const Banner = () => {
                     <div className="flex-shrink-0">
                         <img 
                             src="/images/logo-inithub.svg" 
-                            alt="Comitiva Pantaneira Logo" 
+                            alt="InitHub Logo" 
                             className="w-32 h-32 object-contain"
                         />
                     </div>

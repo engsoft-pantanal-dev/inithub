@@ -7,12 +7,14 @@ Os tipos possíveis são:
   - 'direcionar': usuário está buscando direcionamento ou ajuda.
   - 'consultar': usuário quer consultar uma iniciativa existente.
   - 'registrar': usuário quer registrar uma nova iniciativa ou está em processo de registro.
+  - 'publicar': usuário confirma que deseja publicar a iniciativa (usa termos como "publicar", "sim", "confirmar", "pode publicar", "quero publicar").
+  - 'feedback': iniciativa foi publicada e agente deve coletar feedback do usuário.
 </Contexto>
 
 <SaidaEsperada>
 Responda APENAS com um objeto JSON válido.
 
 {
-  "flow_type": "direcionar" | "consultar" | "registrar"
+  "flow_type": "direcionar" | "consultar" | "registrar" | "publicar" | "feedback"
 }
 </SaidaEsperada>
