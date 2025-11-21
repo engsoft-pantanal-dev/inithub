@@ -13,68 +13,72 @@ from automation.config import (
 from automation.pages import ChatPage
 from automation.user_session import UserSession
 from automation.llm import LLM
-from automation.initiatives import get_initiative
+from automation.initiatives import get_all_initiatives
 
 
 def simulate_initiative_registration():
     """Simulate a user registering an initiative using LLM."""
     print("🚀 Iniciando simulação de cadastro de iniciativa\n")
 
-    initiative = get_initiative(2)
-    print(f"📋 Iniciativa a ser cadastrada: {initiative['title']}\n")
-
-    llm = LLM(initiative_data=initiative)
-    llm.setup_client()
-    print()
-
-    with UserSession(site_url=INITHUB_URL, headless=HEADLESS_MODE) as session:
-        home_page = session.login(email=DEFAULT_EMAIL, password=DEFAULT_PASSWORD)
-
-        home_page.open_chat()
-        chat_page = ChatPage(session.driver)
-
-        initial_message = (
-            "Olá! Tenho uma nova ideia de iniciativa que gostaria de registrar."
+    count_initiatives = 0
+    for initiative in get_all_initiatives():
+        count_initiatives += 1
+        print("--------------------------------------------------\n")
+        print(
+            f"📋 Iniciativa a ser cadastrada ({count_initiatives}): {initiative['title']}\n"
         )
 
-        chat_page.send_message(initial_message)
+        llm = LLM(initiative_data=initiative)
+        llm.setup_client()
+        print()
 
-        interaction_count = 0
+        with UserSession(site_url=INITHUB_URL, headless=HEADLESS_MODE) as session:
+            home_page = session.login(email=DEFAULT_EMAIL, password=DEFAULT_PASSWORD)
 
-        while interaction_count < MAX_INTERACTIONS:
-            interaction_count += 1
-            print(f"\n--- Interação {interaction_count} ---")
+            home_page.open_chat()
+            chat_page = ChatPage(session.driver)
 
-            if chat_page.check_success_alert():
-                print(
-                    "\n✅ Iniciativa já está publicada (alerta visível). Encerrando simulação."
-                )
-                break
+            initial_message = (
+                "Olá! Tenho uma nova ideia de iniciativa que gostaria de registrar."
+            )
 
-            if not chat_page.wait_for_response(timeout=DEFAULT_TIMEOUT):
-                print("⏱️ Timeout esperando resposta do agente")
-                break
+            chat_page.send_message(initial_message)
 
-            sleep(RESPONSE_WAIT_TIME)
+            interaction_count = 0
 
-            agent_message = chat_page.get_last_agent_message()
+            while interaction_count < MAX_INTERACTIONS:
+                interaction_count += 1
+                print(f"\n--- Interação {interaction_count} ---")
 
-            if not agent_message:
-                print("⚠️ Não foi possível obter mensagem do agente")
-                break
+                if chat_page.check_success_alert():
+                    print(
+                        "\n✅ Iniciativa já está publicada (alerta visível). Encerrando simulação."
+                    )
+                    break
 
-            response = llm.get_response(agent_message)
+                if not chat_page.wait_for_response(timeout=DEFAULT_TIMEOUT):
+                    print("⏱️ Timeout esperando resposta do agente")
+                    break
 
-            sleep(MESSAGE_DELAY)
+                sleep(RESPONSE_WAIT_TIME)
 
-            chat_page.send_message(response)
-            sleep(MESSAGE_DELAY)
+                agent_message = chat_page.get_last_agent_message()
 
-        if interaction_count >= MAX_INTERACTIONS:
-            print("\n⚠️ Número máximo de interações atingido")
+                if not agent_message:
+                    print("⚠️ Não foi possível obter mensagem do agente")
+                    break
 
-        print("\n✅ Simulação concluída! Pressione Enter para sair...")
-        input()
+                response = llm.get_response(agent_message)
+
+                sleep(MESSAGE_DELAY)
+
+                chat_page.send_message(response)
+                sleep(MESSAGE_DELAY)
+
+            if interaction_count >= MAX_INTERACTIONS:
+                print("\n⚠️ Número máximo de interações atingido")
+
+            print("\n✅ Simulação concluída!")
 
 
 def main():

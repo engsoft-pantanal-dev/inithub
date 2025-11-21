@@ -16,7 +16,7 @@ OPENROUTER_MODEL_NAME = os.getenv("OPENROUTER_MODEL_NAME", "gpt-4o-mini")
 AGENT_MODEL_TEMPERATURE = float(os.getenv("AGENT_MODEL_TEMPERATURE", "0.7"))
 
 # Automation Configuration
-MAX_INTERACTIONS = int(os.getenv("MAX_INTERACTIONS", "15"))
+MAX_INTERACTIONS = int(os.getenv("MAX_INTERACTIONS", "10"))
 DEFAULT_TIMEOUT = int(os.getenv("DEFAULT_TIMEOUT", "15"))
 MESSAGE_DELAY = float(os.getenv("MESSAGE_DELAY", "1.0"))
 RESPONSE_WAIT_TIME = float(os.getenv("RESPONSE_WAIT_TIME", "20.0"))
